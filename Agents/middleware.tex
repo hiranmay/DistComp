@@ -1,0 +1,162 @@
+\section{Agent Middleware}
+
+Agent middleware platforms are designed to support a set of functions pertaining to agent creation, destruction and migration,
+collectively known as {\it agent management services}. Besides, they provide APIs for facilitating agent communication. There
+are two distinct categories of agent middleware platforms: (a) those supporting homogeneous programming environment, such as
+C/C++ or Java, and (b) those supporting multiple programming environments. Further, some of the platforms support 
+agent migration. 
+
+\subsection{FIPA Reference model}
+
+\index{FIPA reference model}
+In order to support multi-agent systems comprising agents hosted on different middleware platforms, interoperability of such
+platforms need to be ensured. FIPA specifies some common management principles for the agent platforms to achieve such 
+interoperability. FIPA reference model for an agent platform is shown in figure~\ref{fig:agents:ams}.
+
+\begin{figure}[!htbp]
+	\centering
+	\epsfig{figure="./Agents/ams.eps", width=0.8\linewidth}
+	\caption{FIPA Agent Management Reference Model}
+	\label{fig:agents:ams}
+\end{figure}
+
+\noindent
+As shown in the figure, a FIPA compliant agent platform minimally comprises the following components:
+\index{agent management system} \index{directory facilitator} \index{yellow page} \index{agent communication channel}
+\begin{itemize}
+	\item {\em Agent Management Services (AMS)} to support creation and destruction of agents, and the migration of an agent 
+		from/to some other node. Further, the AMS need to provide a unique name to an agent on creation, which can be 
+		used to refer to it for communication purposes.
+	\item {\em Directory Facilitator (DF)} (also known
+		as a ``Yellow Page'' service) that maintains a list of all agents and their properties. It should provide search
+		service to locate an agent (if available) with some specified capabilities.
+	\item {\em Agent Communication Channel (ACC)} is a messaging platform that enables agents on the same platform (which can
+		be distributed over multiple computing nodes) as well as on other platforms to communicate to each other over some 
+		standard transport protocol, e.g. TCP or UDP.
+\end{itemize}
+
+\noindent
+AMS and DF are implemented as FIPA compliant agents. Other agents can talk to them using ACL and relevant interaction protocols. 
+For example, a newly created agent can register with the DF using ``Request'' interaction protocol. 
+
+\index{FIPA agent life-cycle}
+The life-cycle of an agent in FIPA reference model is shown in figure~\ref{fig:agents:life}. An agent, before it is created
+in at an {\em unknown} state. It comes to an {\em initiated} state when created by the hosting platform, and to {\em active}
+state when executed. It can move to {\em waiting} state to wait to be woken up by an external event. An agent can also be {\em suspended}
+by the AMS. A mobile agent goes to the {\em transit} state while migrating. An agent in active state may quit, or it can be destroyed
+by the AMS, taking it back to the unknown state.
+
+\begin{figure}[!htbp]
+	\centering
+	\epsfig{figure="./Agents/life.eps", width=0.8\linewidth}
+	\caption{Life-cycle of an agent}
+	\label{fig:agents:life}
+\end{figure}
+
+\subsection{FIPA Compliant Middleware}
+
+Several agent middleware have been developed during 1995  -- 2005, some of which are FIPA compliant. Two of the platforms,
+which are FIPA compliant and are still in use, are JADE and MobileC. Both the platforms can be distributed over multiple 
+computing nodes and support mobile agents. They can be used over a variety of platforms including constrained devices like
+in mobile handsets and IoT based systems, besides personal computers and servers. We shall briefly introduce some salient 
+design considerations of these platforms. Agent mobility will be discussed in the next section.
+
+\subsubsection*{JADE: Java Agent Development Environment}
+
+\index{JADE} \index{Java Agent Development Environment|see {JADE}}
+JADE~\citep{Bellifemine:2005} is a FIPA compliant platform that has been developed to facilitate development of multi-agent
+systems in Java programming environment. Use of Java programming environment naturally takes care of portability and security
+issues in a multi-agent system. Since the FIPA ACL introduces significant overheads, JADE distinguishes between 
+intra-platform and inter-platform messages. When two interacting agents are hosted on the same platform, JADE uses Java 
+RMI for communication. When the two interacting agents are hosted on different platforms, use of FIPA-ACL becomes mandatory. 
+Further, JADE incorporates a library of FIPA interaction protocols over the communication layer to enable quick application
+development. 
+
+Another important design consideration of Jade is to limit the number of threads running on a node. It uses {\em active object 
+design}~\citep{Lavender:1996} principles, when each agent runs on a single thread. The tasks are classified based on their
+behavioral pattern and are queued to run on asynchronous threads.
+JADE-LEAP is an engineered version of Jade that can run on resource constrained devices, such as Java enabled mobile phones. For 
+example, it has been ported to Android platform by wrapping it as a service~\citep{Bergenti:2014}. In this approach, a Jade container 
+is split into a front-end running on the mobile terminal (where the JADE runtime is activated), and a back-end running on a remote
+server (possibly hosted on the wired network). Multiple back-end modules can be created based on the workload of the agents.
+% ~\footnote {The installation and programming manuals (with examples) for Jade are available on 
+% \url{https://jade.tilab.com/documentation/tutorials-guides/}.} 
+
+
+\subsubsection*{MobileC}
+
+\index{MobileC}
+Use of Java as the programming environment in Jade and many other agent platforms results in significant runtime overheads.
+Mobile-C~\citep{Chen:2006} uses C/C++ as the programming environment to support of agent based systems on hardware with lower 
+capability, e.g. the 
+control systems, which are generally programmed in low-level languages. Use of a low-level language for agent programming
+poses portability (due to difference in machine architecture) and security (e.g. recall power of pointers in C) issues. MobileC 
+solves the problem by running the agents in an interpreted virtual environment. The virtual environment exercises complete
+control over the agent and ensures portability, but arguably introduces some execution overheads as compared to the code run 
+on a bare machine.
+
+On MobileC platform, an agent is divided into multiple subtasks, which are listed in a task list. The task-list can be dynamically 
+updated by introducing new subtasks and deleting the completed/aborted ones. A task from the list can be scheduled on different nodes 
+of the system. The ability to dynamically change the task list and allocate the tasks on different nodes introduces flexibility 
+in agent execution and performance improvement.
+
+\subsection{Agent Migration}
+
+\index{mobile agent!migration of} \index{strong migration} \index{weak migration}
+Agent migration involves executing foreign code on a node and poses some unique challenges for the agent platforms, most
+important ones being portability and security. A mobile agent, on migration to a new node, should have supporting runtime
+environment. Further, a mobile agent need to be protected against a possible hostile environment and a host should be
+protected against a hostile agent. As we have seen, both Jade and MobileC addresses the portability and security issues by 
+running the agents in interpreted environment.
+
+There are two types of migration supported by the different agent platforms. 
+\begin{itemize}
+	\item {\em Strong migration}, where the agent code, it's execution state and data are captured on the source
+		node and migrated to a target node. After a strong migration, the agent is recreated on the target
+		node and it's execution states and data are reinstated. The agent continues to execute it's code exactly
+		from the same point and with the same data as  it had been interrupted on the source node. In general,
+		it is not possible to support strong migration on a platform where the different nodes support heterogeneous 
+		programming environment. For example, an agent coded in Java needs a JVM support to execute, and which
+		may not be available on a target machine. 
+	\item {\em Weak migration}, where only the agent data is transferred from one node to another. The agent code is
+		assumed to pre-exist in the target node. The agent on the source node is terminated and a corresponding one
+		is initiated when an agent ``migrates'' to the target node. Weak migration is possible across heterogeneous
+		nodes, since different implementations of an agent in different programming environments, implementing the
+		same logic, may be installed on the various nodes. Further, when the data volume is low, weak migration 
+		imposes lower overheads than strong migration.
+\end{itemize}
+
+Of the platforms discussed, Jade supports strong migration and MobileC supports weak migration. We discuss the Jade agent
+migration strategy here. Considering the nuances of heterogeneous platforms, FIPA interaction protocol for agent migration 
+is under-specified. Jade has extended the FIPA interaction protocols to implement agent migration function~\citep{Ametller:2003}. 
+In this model, an agent willing to migrate interacts with AMS using FIPA ACL, and the latter obliges by moving it.
+%
+The migration process consists of the following steps:
+\begin{enumerate}
+	\item The agent that wants to to migrate starts a conversation with the AMS agent of the source platform. It creates
+		a description of itself (serialized code and data) and sends a ``Request'' message to the AMS with expressing
+		it's intention to move, destination node and the description of itself.
+	\item The local AMS on the source node may decide to accept or refuse the request. In the former case, it forwards the 
+		request with the description of the agent to the AMS on the destination node. 
+	\item The AMS on the destination node exercises it's own criterion to decide to accept or to reject the request. If either
+		of the two AMSes rejects the request, the same is made known to the requesting agent and the process is aborted.
+	\item If the AMS of the destination process accepts the request, the acceptance is made known to the requesting agent
+		through the AMS on the source node. The AMS on the source node terminates the agent.
+	\item The AMS of the destination node creates an instance of the agent and loads it's data (from the agent description)
+		and executes it. The agent migration is complete.
+\end{enumerate}
+
+\noindent
+A simplified interaction protocol for agent migration in Jade is shown in figure~\ref{fig:agents:migration}.
+
+\begin{figure}[!htbp]
+	\centering
+	\epsfig{figure="./Agents/migration.eps", width=0.8\linewidth}
+	\caption{Jade interaction protocol for agent migration}
+	\label{fig:agents:migration}
+\end{figure}
+
+In Mobile-C environment, the mobility is introduced by scheduling the different subtasks of an agent on different nodes. The data 
+of an agent is moved to the target node when the agent ``migrates''. Once a subtask has started on a certain host, the agent 
+cannot move until the execution has been completed.
+

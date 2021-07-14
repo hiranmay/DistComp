@@ -1,0 +1,39 @@
+
+\index{agent-based system} \index{multi-agent system|see {agent-based system}}
+\index{autonomy}
+As the complexity of the distributed systems grows, there is a need for making the computing elements independent in design and
+autonomous in operations. Autonomy of the system components means that they should be able to execute without human intervention
+for prolonged periods of time. It implies that, given some high level goal, the system components should be able to create their 
+own plans, execute them and react to any unforeseen situations. This, in turn, requires that they be able to make independent 
+decisions and that computing intelligence be distributed over the network. An intelligent and autonomous system component is 
+called an {\em agent}. An agent-based system (also called multi-agent system) comprises multiple agents communicating with each 
+other over a network. 
+%
+Today, the agent-based systems are used in many application scenarios, ranging from purely software environment such as information 
+retrieval and e-commerce, to cyber-physical systems in industry, battlefields and scientific explorations. While the number of 
+participating agents and decision-making capabilities (degree of autonomy) of the individual agents may vary from system to system, 
+a common characteristics of the agent based systems is that each of the agents specializes in implementing a specific function. 
+Agent based systems represent a bottom-up system design paradigm, with each agent designed independently to realize a specific 
+capability. The system behavior emerges from interaction of a group of agents. 
+For example, a unmanned ground vehicle may be designed to operate on a factory floor and have some generic capabilities like
+autonomous navigation and carrying some objects from one place to another, without a the nature of the requirement of a specific 
+factory unknown. In a warehouse environment, such vehicles can be assigned specific tasks like shelving incoming goods and
+retrieving outgoing goods, to implement warehouse functionality. This gives a tremendous flexibility in deployment of these agents 
+over traditional distributed systems, where the interaction of system components are pre-defined and tailored to the system goals. 
+
+In this chapter, we begin with a brief introduction to intelligent agents and their internal architectures. We introduce multi-agent
+systems and continue with the realization of their social abilities in a distributed environment. At the outset, we present the 
+protocols for communication and interaction of the agents. We discuss a reference model for agent platform and agent mobility.
+Following this, we present methods for coordination of autonomous agents, planning and contract negotiation that are important
+issues for realizing system functionality in an agent based systems. We discuss the security issues posed by agents and platforms
+of heterogeneous origins and sketch the methods to address them. We provide an example application of agent-based system as a use-case
+and conclude the chapter with some salient observations.
+
+\input ./Agents/architecture.tex
+\input ./Agents/communication.tex
+\input ./Agents/middleware.tex
+\input ./Agents/coordination.tex
+\input ./Agents/applications.tex
+\input ./Agents/conclusion.tex
+\input ./Agents/exercises.tex
+

@@ -1,0 +1,180 @@
+\section{Communication in Agent based Systems}
+
+\index{agent-based system!communication}
+The agents in a multi-agent system needs to interact with each other in order to realize the system functions. As in other 
+distributed systems, the agents do not have any shared memory. Thus, the information possessed by an agent is strictly
+private to itself. The agents can share information only by explicitly exchanging messages. 
+%
+For example, consider the case when a travel agent collaborates with several service providers to create a travel plan.
+The proposed itinerary is private to the travel agent, and the information about the services offered are private to the 
+service agents. The agents need to share the information explicitly to realize the travel plan.
+
+The underlying network in a multi-agent systems is generally a IP network and, at the lowest level, the agents talk to 
+each other with TCP, UDP or HTTP protocols. In cyber-physical systems, agents may need to operate on unreliable networks,
+and specific techniques are deployed to account for the unreliability. In the rest of the chapter, we assume that the 
+agents communicate over a reliable transport mechanism.
+%
+However, the transmission and reception of a byte-stream in a reliable manner is not sufficient for effective communication
+between two agents. Since the agents are independently designed and are autonomous, they can transmit arbitrary byte-streams,
+the meaning of which may not be comprehensible to the recipient agent. It is analogous to the fact that, in the human society,
+we need to speak the same language and use the same meanings of the terms unambiguously to be understood. Thus, there needs 
+to be an application-level protocol guiding the message structure and contents for the agents to unambiguously interpret the 
+messages. Another aspect of the communication is the pragmatics, i.e. how an agent should respond to a message. For example, 
+the social behavior in human society demands that, in response to a query ``can you tell me the time'', a person responds with 
+something like``it is half past eight'' and not ``yes'', though the latter is also a logically valid response! 
+
+\index{FIPA} \index{Foundation of Intelligent Physical Agents|see {FIPA}}
+\index{KQML} \index{ARCOL}
+While the agent technology had been maturing from research to industrial applications towards the later half of the 1990s, 
+Foundation of Physical Agents (FIPA), a non-profit consortium of industries, took up the initiative of standardizing agent 
+communications and interactions. The resulting specifications were based on earlier research efforts, primarily KQML~\citep{Finin:1994} 
+and ARCOL (developed by French Telecom). Latest version of specifications from FIPA have been adopted by IEEE in 
+2005. Presently, the standards are not being maintained, though they remain the guiding principles behind agent communication. 
+
+Strictly speaking, the communication and interaction protocols conflict with the autonomy of the agents~\citep{Chopra:2013}. 
+In order to comply with the standards, they cannot compose and transmit any arbitrary messages at any given context. An agent 
+autonomy is also restricted when an agent needs to follow some social ethics, e.g. that it cannot retract from an earlier 
+commitment communicated through a message in context of an interaction.
+
+\subsection{Agent Communication Protocols}
+
+\index{FIPA-ACL} \index{agent communication language} \index{speech-act theory}
+\index{communicative act theory|see {speech-act theory}} \index{performative}
+The FIPA model of agent communication is based on {\em speech-act theory}~\citep{Austin:1975}, which suggests that every 
+communication has a purpose behind it, and is a part of a plan to achieve something. Though the theory had originally been 
+developed for establishing a framework for human conversation (and hence the name), it has been found to have general 
+application in non-verbal communication among humans as well as automated agents. Thus, some authors prefer to call it by 
+a generic {\em communicative act theory}. While the 
+purpose is often implicit (and hence ambiguous) in human speech, it is made explicit in agent communication language. For example,
+instead of saying ``it is raining'', we can say ``I {\it inform} you that it is raining'' to make the intention of my speech
+explicit. The explicit declaration of the purpose of communication is known as a {\em performative}. A performative can be 
+classified into a few broad classes as shown in figure~\ref{fig:agents:performatives}. 
+
+\begin{figure}[!htbp]
+	\centering
+	\epsfig{figure="Agents/performatives.eps",width=0.8\linewidth}
+	\caption{Classes of performatives}
+	\label{fig:agents:performatives}
+\end{figure}
+
+\index{performative|textbf}
+\begin{definition} [performative]
+	A {\em performative} is an explicit declaration of the purpose of communication 
+\end{definition}
+
+\begin{figure}[!htbp]
+	\centering
+	\epsfig{figure="Agents/comm-model.eps",width=0.6\linewidth}
+	\caption{FIPA Agent Communication Model}
+	\label{fig:agents:comm-model}
+\end{figure}
+
+\index{performative} \index{communicative act|see {performative}}
+The FIPA model of agent communication is shown in figure~\ref{fig:agents:comm-model}. A message exchanged between two agents 
+in FIPA agent communication model consists of two parts (a) an envelop and (b) a content. 
+%
+The structure and the semantics of the envelop is defined by the FIPA Agent Communication Language (ACL). It contains a performative 
+that signifies the purpose of the message. FIPA ACL defines 22 performatives, each of which belongs to a performative class described
+in figure~\ref{fig:agents:performatives}. These performatives are used to implement different types of agent interactions. We shall 
+explain some of them through examples in the following sections.
+%
+Besides a performative, the envelop of a message contains a few other fields, e.g. the identities of the sender and the receiver 
+agents. A response message incorporates context, comprising a reference to the original query or request and the identity of the 
+interaction protocol (discussed in the next section) to which it is a part of. 
+
+\index{content language}
+\index{RDF} 
+The content field in a message can contain a simple yes/no type to response (to a confirmation request), or a more complex  
+expression, like a plan to be executed or some knowledge to be shared. Different applications need different kinds of 
+expressivity in the contents. Accordingly, FIPA standardizes a set of content languages for use in different contexts.
+For example, {\em Semantic Language (SL)} can be used to formulate propositions like in predicate calculus, {\em Constraint
+Choice Language (CCL)} is useful to model constraint satisfaction problems and {\em Resource Description Framework 
+(RDF)}~\footnote{Described in chapter~\ref{chap:knowledge}.} can be used to communicate a knowledge graph. FIPA ACL
+is open to new content languages to be incorporated in the standard. 
+ 
+\index{ontology!application in agent communication}
+Another important aspect of communication is establishing the formal meaning of the tokens used in the content. For example, there 
+should be a common understanding between the sender and the receiver agents about meanings of the terms ``book'', ``price'' and
+``Rs.'' (the unit of currency used), when the message content deals with the price of a book. The terms are generally domain-specific, 
+and the sender and the receiver refers to an ontology (see chapter~\ref{chap:knowledge}) to establish a common meaning of the 
+tokens. A FIPA message envelop (ACL) contains a pointer to the reference ontology for the content.
+
+\subsection{Interaction Protocols}
+
+\index{interaction protocols} 
+In order to implement system functionality, an agent is expected to act and respond in a certain way on receipt of a message,
+following some social norms. For example, on receiving a request, a receiver are generally expected to fulfill the request and
+confirm, or let the sender know it's inability to do so.
+%
+While the interaction between two agents in a specific application is guided by the contextual needs, they can be composed
+out of a finite set of generic building blocks. FIPA identifies a number of such elementary interaction units and standardizes
+models for such interactions. We present an illustrative example for such interaction models.
+
+\subsubsection*{Request Interaction Protocol}
+
+\index{request interaction protocol}
+{\it Request} is one of the simplest interaction protocols, where an agent $A$ sends a request to another agent $B$ and 
+expects some response from $B$. A request can take two forms: (a) request for some information, and (b) request for some action to be 
+undertaken taken. Agent $B$ may either refuse to act on the request, or agree to act upon it. If $B$ agrees to act, it's response
+can be either (a) a piece of information that had been requested, or (b) a confirmation that the action has been taken, depending
+on the request type. In either case, the agent may fail to satisfy the request. Thus, the possible message flows in the request
+interaction can be as depicted in figure~\ref{fig:agents:request} as message sequence charts. 
+
+\begin{figure}[!htpb]
+
+	\subfigure[$B$ refuses to act on the request]{
+		\begin{minipage}{0.45\linewidth}
+			\centering
+			\epsfig{figure="./Agents/request-refuse.eps",width=0.8\linewidth}
+		\end{minipage}
+	}
+	\subfigure[$B$ fails to fulfill the request]{
+		\begin{minipage}{0.45\linewidth}
+			\centering
+			\epsfig{figure="./Agents/request-failure.eps",width=0.8\linewidth}
+		\end{minipage}
+	}
+	\\
+	\vspace{2mm}
+	\subfigure[$B$ confirms that the action has been taken]{
+		\begin{minipage}{0.45\linewidth}
+			\centering
+			\epsfig{figure="./Agents/request-done.eps",width=0.8\linewidth}
+		\end{minipage}
+	}
+	\subfigure[$B$ reports the results of a query]{
+		\begin{minipage}{0.45\linewidth} 
+			\centering
+			\epsfig{figure="./Agents/request-result.eps",width=0.8\linewidth}
+		\end{minipage}
+	}
+
+	\caption{Possible message flows in FIPA {\bf request interaction} protocol}
+	\label{fig:agents:request}
+\end{figure}
+
+
+% \subsubsection{English Auction Interaction Protocol}
+% 
+% English auction is the auctioning process, where the seller sets an initial floor price of an item and announces it to
+% a set of potential buyers, called the bidders. On receiving the announcement, the bidders quote a higher price that they
+% are willing to pay for the commodity. The seller accepts the highest bid received, sets it as the new floor price, and
+% repeats the cycle. When none of the buyers are willing to pay more price than the price offered in the earlier cycle,
+% the auction ends, and the seller sells the item to the highest bidder. 
+% The FIPA protocol (FIPA00031) for English auction is shown in figure~\ref{fig:agents:eng-auction}.
+% 
+% \begin{figure}[htbp!]
+% 	\centering
+% 	\epsfig{figure="./Agents/eng-auction.eps",width=0.4\linewidth}
+% 	\caption{Message flow in FIPA {\bf English auction} protocol}
+% 	\label{fig:agents:eng-auction}
+% \end{figure}
+% 
+% An explanation of the message flow diagram is as follows. The seller agent multicasts the start of auction followed by the first 
+% call for proposal (CFP) with a floor price $x$ to all potential buyers. The figure shows only one instance of buyer agents for 
+% simplicity. The participating buyers asynchronously proposes higher values $x_1, x_2, \dots$ for the product. The seller accepts 
+% the proposal of the buyer, who sends the maximum bid and rejects the others. Second round of auction starts with a CFP with a new 
+% floor price $y=\text{max}(x_1, x_2, \dots)$. When there is no bid higher than the floor price received, the seller proceeds with
+% making selling the commodity to the highest bidder with a REQUEST message (to pay the money), and informing others about the 
+% closure of the auction. Note that the bid of a buyer made through a PROPOSE message represents a commitment of the buyer to buy the 
+% product at that price, which it needs to honor. 

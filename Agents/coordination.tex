@@ -1,0 +1,367 @@
+\section{Agent Coordination}
+
+\index{agent-based system!coordination} 
+\index{cooperative agent based system} \index{self-interested agents} 
+In the introduction section of this chapter, we have commented that agent-based systems represent bottom-up design paradigm, and 
+that the agents are designed independent of each-other. In multi-agent systems, we assume the ecosystem to be populated with a number 
+of agents with different capabilities. They need to coordinate with each other in specific problem-solving contexts. For example, in 
+a rescue mission in flood-hit area, a team of aerial, ground and amphibian robots may be deployed. The robots may coordinate their
+operations by planning the mission and by sharing their observations. The decision-making processes in such activities need to be 
+performed at run-time in a highly dynamic environment, and cannot be pre-programmed. When the goals of all the agents are aligned 
+to the system goal, it is called a cooperative system.  In many real life scenario, the self-interested agents may have divergent 
+goals (maximize their own goals) and yet coordinate to realize a system, e.g. the buyers and sellers in a retail e-market. 
+% Modeling coordination in self-interested agents in a competitive setup involve game theoretic approaches and strategic planning, 
+% which is beyond the scope of this book. 
+In the rest of this chapter, we shall concentrate on cooperative systems only. 
+
+Agent-based systems offers several advantages over traditional distributed systems. Dynamic team formation in an agent based system 
+enables the system to work with the available agents in the ecosystem, which is more robust against component failures than 
+pre-configured systems. Further, decommissioning of decrepit agents and induction of new ones do not require any change (configuration 
+update) in the rest of the system. Further, dynamic team formation enables optimization of the outcome and resource utilization, by 
+formation of appropriate agent teams, accounting for their performance and existing workload.
+
+\subsection{Cooperative Distributed Problem Solving (CDPS)}
+ 
+\index{planning!in agent-based system} \index{multi-agent planning} \index{distributed planning}
+Solving a problem with a set of distributed agents generally involves two steps: (a) {\em planning}, when a plan to solve the 
+problem is developed, and (b) {\em execution}, when the plan is executed. In a distributed agent scenario, there are four 
+possibilities as shown in table~\ref{tab:agents:dist-plan}. Central planning for central execution represents a typical single
+agent scenario, when an agent makes it's own plan and executes it. This case is not of interest in context of a distributed
+system. Of the other three possibilities, which are used in multi-agent systems in different contexts, distributed planning
+for distributed execution represents the most general scenario. In this case, a set of agents can collaborate to develop a 
+plan, which is to be executed by the same or a different set of agents. 
+
+\begin{table}[htbp]
+	\caption{Distributed planning and execution \label{tab:agents:dist-plan}}{
+	% \begin{centering}
+	\begin{tabular}{| p{35mm} || p{40mm} | p{40mm}| }
+                \hline
+                & Central Plan Formulation & Distributed Plan Formulation \\
+		\hline
+                \hline
+                Execution by one agent & Central planning for central execution & Distributed planning for central execution \\
+                \hline
+                Execution by multiple agents & Central planning for distributed execution & Distributed planning for distributed execution \\
+                \hline
+	\end{tabular}}{}
+	% \end{centering}
+\end{table}
+
+As an example of distributed planning and execution, consider the problem of federated SPARQL query processing introduced in 
+chapter~\ref{chap:knowledge}, where the capabilities (indexing schemes) of the participant SPARQL servers are not \`{a}-priori 
+known to the mediator. The query processing plan is evolved though a negotiation process jointly by the mediator and the 
+individual SPARQL servers in a distributed manner. The mediator decomposes the problem in different possible ways and the servers 
+confirm if they can solve a specified sub-query. During execution phase, the servers returns the results of the sub-queries,
+and the mediator integrates them. In this example, we see a hierarchical approach, where the mediator addresses the big problem
+(the query) and the servers address the individual components (sub-queries).
+%
+There can be other examples (e.g. a swarm of heterogeneous robots on a mission), where no such ``mediator'' may exist, and agents 
+may need to work out a plan and execute it through many-to-many peer level interactions. 
+
+\noindent
+The primary motivations for distributed planning and problem-solving can be summarized as~\citep{Durfee:2013}:
+\begin{enumerate}
+	\item {\em Use of multiple computing resources in parallel}. When a problem can be decomposed into several homogeneous 
+		components, a large number of agents can be deployed in parallel. For example, when a large geographical area 
+		is to be explored, it can be subdivided into a number of smaller areas, and exploration of each can be delegated 
+		to one agent.
+	\item {\em Utilizing distributed expertise}. In general, the solution to a problem requires multiple skills, which may
+		be distributed across agents. For example, in a travel planning scenario, different agents may represent hospitality,
+		travel and other logistic services. A travel itinerary may be created by a collaborative efforts of these agents.
+	\item {\em Utilizing distributed data}. The data in a large system may be inherently distributed over a large geographical
+		area, and may be heterogeneous. For example, a camera based surveillance network spread over a city may comprise
+		a large number of cameras with different specifications. In such cases, it is generally useful to delegate processing 
+		of data to a local agent, rather than importing the entire data on a central node for processing.
+	\item {\em A set of tasks may need to be executed by multiple agents}. For example, in a food delivery system, the individual
+		delivery tasks need to be executed by different delivery agents. It calls for an optimal task allocation, considering 
+		the proximity of the agents with respect to delivery locations.
+\end{enumerate} 
+
+Distributed planning is often regarded as a special case of distributed problem solving~\citep{Durfee:2013}, where the problem is 
+defined as development of a plan. Further, in an inaccessible, dynamic and non-deterministic environments, all parameters of a 
+complete plan are not \`{a}-priori known and the actions of an agent may not always produce the desired results. This requires plans 
+to be dynamically or reactively changed during the course of execution. In such cases, planning and execution tasks are generally 
+interleaved.
+
+\subsection{Distributed Plan Representation}
+
+\index{distributed plan}
+In a multi-agent system comprising of a set of $n$ agents $\mathcal{AG} = \{AG_1, AG_2, \dots AG_n\}$, the system state 
+$\mathcal{S}$ is a concatenation of the states $S_i$ of the individual agents, i.e. 
+$\mathcal{S} = S_1 \mid \mid S_2 \mid \mid \dots \mid \mid S_n$. In general, the state $S_i$ of an agent $AG_i$ is a concatenation 
+of several state variables, typically the readings of the sensors that senses it's environment, i.e. 
+$S_i = s_{i1} \mid \mid s_{i2} \mid \mid \dots s_{ik_i}$.
+% ~\footnote{In general, the environment may be dynamic, i.e. the system state can change even without an action of any agent.}
+An agent $AG_i$ can perform one of a set of actions $A_i = \{ act_{i1}, act_{i2}, \dots act_{im_i} \}$. 
+
+In a multi-agent system, the actions need not always be sequentially executed. The different agents can execute the actions 
+in parallel and independent of each other. However, an action of an agent can be dependent on another action, either by the same 
+agent or by another agent. Let $in(act)$ represent the set of actions, all of which must be completed before action $act$ can 
+be undertaken, and $out(act)$ represent the set of actions, any of which can be undertaken when action $act$ is completed. 
+An action $act_2$ can follow $act_1$, only if $act_2 \in out(act_1)$ and $act_1 \in in(act_2)$. An agent performing an action
+$act$ informs all agents required to perform the actions in $out(act)$ on completion of $act$, so that the actions in $out(act)$
+may start.
+%
+Moreover, an action $act$ can be associated with a {\em precondition} $precond(act)$ and an {\em effect} $effect(act)$, defined 
+by a set of state variables. Over and above the dependencies of the actions, an action can be undertaken if it's preconditions are met. 
+In order for an agent to check if the preconditions are met, an agent may need to request other agents for some state variables 
+that it cannot directly sense. 
+
+Figure~\ref{fig:agents:mas-plan} depicts the dependencies of actions in an multi-agent system. The rectangles in each of the columns
+represent the actions to be performed by an agent. Each of the actions are associated with a precondition ($p$) and effect ($e$). 
+Each arrow represent an {\it in-out} relation, e.g. $act_{11} \in in(act_{22})$ and $act(23) \in out(act_{22})$. The relations
+constitute a possibly fragmented set of directed acyclic graphs.
+
+\begin{figure} [!htbp]
+	\centering
+	\epsfig{figure="Agents/mas-plan.eps",width=0.6\linewidth}
+	\caption{Dependencies of actions in multi-agent systems}
+	\label{fig:agents:mas-plan}
+\end{figure}
+
+\begin{definition}
+A {\em plan} in a multi-agent system can be represented by partial ordered set of actions, to be performed by different agents, that 
+takes the system from an initial state to a final state. 
+\end{definition}
+
+\subsection{Task Allocation}
+\label{sec:agents:tasks}
+
+\index{task allocation!in agent-based system}
+In an agent-based system, decision for task allocation is taken in a dynamic manner, depending on the availability of the
+agents with necessary capabilities at the time of allocation. Like in other distributed systems, an {\em initiator} agent
+decomposes a problem into atomic tasks and allocates each of them to a {\em participating} agent. However, unlike in a 
+traditional system, where the task allocation is dictated by the initiator, the agents in a multi-agent system need to 
+voluntarily come forward and express its desire to execute the task. In general, there can be more than one agent bidding 
+for a task, when the task is to be allocated to the most suitable candidate. Task allocation in an agent based system refers 
+of task allocation using a negotiation protocol.
+We describe a protocol that is commonly used for task allocation in an agent based system in the following text. 
+
+
+\subsubsection*{Contract-Net Protocol}
+
+\index{Contract-Net Protocol}
+The Contract-Net Protocol~\citep{Smith:1980} derives its name from the ``contract'' that it establishes between an initiator
+and a participant agent. A contract is an agreement whereby an initiator agent awards a task to a participant agent (perhaps
+in return of some reward), and a participant agent commits to perform a task and communicate the results back to the initiator 
+agent. Creation of a contract requires initiator and the participator agents to negotiate with each other with the task parameters. 
+The Contract-Net Protocol (CNP) is an interaction protocol that specifies the conversation format, i.e. the message sequence for contract 
+negotiation in a multi-agent system. The message flow in the protocol is shown in figure~\ref{fig:agents:contract-net}. An initiator 
+that identifies a task to be executed communicates a call for proposal (CFP) with the task specification to a set of
+possible participants. The participants may either respond with a proposal (bid), or may refuse. The
+initiator agent evaluates the received bids, and allocates the task to a participant agent based on some evaluation criterion.
+Once a task has been allocated to a participating agent, it attempts to execute the task and responds either with a failure, or
+successful completion. In the later case, the participating agent may either inform that the task has been completed, or communicate 
+the result depending on the nature of the task.
+
+\begin{figure} [!htbp]
+	\centering
+	\epsfig{figure="Agents/contract-net.eps",width=0.4\linewidth}
+	\caption{Contract-Net Interaction Protocol}
+	\label{fig:agents:contract-net}
+\end{figure}
+
+Though the roles of initiator and contractor are asymmetric, it does not determine an hierarchy of the agents in a multi-agent
+system. It is possible that an agent $A$ is a contractor to $B$ in a certain context, but the roles may reverse in a different
+context, even in the same problem-solving context. For example, in figure~\ref{fig:agents:mas-plan}, $act_{22}$ is dependent
+on $act_{11}$ and $act_{13}$ is dependant on $act_{22}$. Thus, to execute $act_{13}$, $AG_1$ needs to engage $AG_2$ as a 
+contractor to undertake the prerequisite $act_{22}$. In turn, in order to execute $act_{22}$, $AG_2$ needs to engage $AG_1$ as a
+contractor to undertake the prerequisite $act_{11}$.
+
+In a closed community of agents, an initiator may broadcast the task over the network. But, this approach may impose heavy 
+communication overheads in an open community of agents. In an open system, an initiator may announce a task to some \`{a}-priori 
+known potential participants, either from its past experience or by consulting a yellow page service. Each of the potential 
+participants, who receive the task announcement, check their eligibility for the task and the availability of the resources 
+in context of their current occupation.
+Let an agent $AG_i$ that is currently executing a set of tasks $\tau_i$, receive a new announcement for task $t$. The additional resources 
+required for the agent to undertake the task can be expressed as 
+
+\begin{equation}
+	r_i(\{ t \} \mid \tau_i) = r_i(\tau_i \cup \{ t \}) - r_i(\tau_i) 
+\end{equation}
+
+\noindent
+where $r_i(\tau)$ represents the resource (say, processing power) required by an agent to perform a set of tasks $\tau$. It is possible 
+that the agent $AG_i$ is already performing some of the subtasks of $t$ as a part of $\tau_i$. Thus, in general
+
+\begin{equation}
+	r(\{ t \} \mid \tau) \leq r(\{ t \}) 
+\end{equation}
+
+\noindent
+Assuming that the agent $AG_i$ has a spare resource capacity of $\epsilon_i$ while performing $\tau_i$, it can accept the task only if
+
+\begin{equation}
+	r_i(\{ t \} \mid \tau_i) \leq \epsilon_i
+\end{equation}
+
+\noindent
+The incremental cost of executing a task by an agent can be modeled in a similar way. An agent in a cooperative system may truthfully
+disclose the actual cost. In a competitive environment, an agent may make some strategic decisions to further its own gains. 
+The initiator agent can choose a participant agent based on various parameters, such as the projected cost of execution, 
+quality parameters (e.g. accuracy), trust, etc.
+
+It is possible that no agent comes up with a bid in response to a particular task announcement, in which case an initiator may
+retry hoping that new agents will come up in the system, or some existing eligible agents will become free. Alternatively, it may
+decompose the task differently and make a revised announcement. Further, a participant may return with a failure because of several
+reasons. In such cases, the initiator may retry, possibly with an alternate task decomposition. In mission critical systems, a 
+task may be allocated to more than one agent by an initiator for achieving redundancy. 
+
+
+\subsection{Allocation of Multiple Tasks}
+
+\index{task allocation!in agent-based systems}
+There are situations where allocating multiple tasks together provides a more efficient solution than another. For example, consider
+a situation where two parcels $P_1$ and $P_2$ are to be delivered, one from location $A$ to $B$ and the other from location $B$ to $C$ 
+as shown in figure~\ref{fig:agents:multi-task}. Assume that two delivery agents $AG_1$ and $AG_2$ are available at locations $A$ and
+mid-way between $A$ and $B$ respectively as shown in the figure. Assume that the cost of delivery for an agent is in proportion to the 
+distance travelled to pick-up and deliver a parcel (including the idle tun). Thus, the delivery cost for $P_1$ will be $x$ for $AG_1$ 
+and $1.5x$ for $AG_2$, where $x$ is some proportionality constant. Similarly, the delivery cost for $P_2$ will be $2x$ for $AG_1$ and 
+$1.5x$ for $AG_2$. Thus, if the contracts for delivery for parcels $P_1$ and $P_2$ are contracted separately, it is optimal to award 
+delivery of $P_1$ to $AG_1$ and that for $P_2$ to $AG_2$ at a total cost of $2.5x$.
+
+\begin{figure} [!htbp]
+	\centering
+	\epsfig{figure="Agents/multi-task.eps",width=0.8\linewidth}
+	\caption{Allocation of Multiple Tasks}
+	\label{fig:agents:multi-task}
+\end{figure}
+
+In this example, it is possible to optimize the total cost of delivery by announcing the two tasks together. The cost for delivering
+the two packets will be $2x$ for $AG_1$ and $2.5x$ for $AG_2$. Thus, there is a savings of $0.5x$ by announcing the tasks together
+and awarding them to $AG_1$. This example shows the dilemma of granularity in task decomposition that an initiator agent may face. 
+In general, it is more economic if a larger chuck of a task is sub-contracted, but smaller chucks generally have greater chance of
+success in finding a bidder. This is exemplified in the SPARQL query processing example in chapter~\ref{chap:knowledge} as well.
+
+\subsection{Coordinating through the environment}
+\label{sec:agents:aco}
+
+In this section, we present a class of algorithms for optimal plan generation, that has received significant attention in the
+present times, with respect to swarm robotics. In swarm robotics, a large number of robots coordinate with each other to develop 
+and execute a plan with peer-level interaction. The technique is known as {\em ant colony optimization}~\citep{Dorigo:2006} and 
+has been motivated by the foraging behavior in the ant colony. It has been observed that a group of ants, starting from a nest, 
+collectively finds the shortest path to food source.
+
+\index{ACO algorithm} \index{pheromone}
+Consider a situation, where there are two possible paths for the ants starting from their nest to reach the food as shown in 
+figure~\ref{fig:agents:ant1}. Initially, the ants randomly explore both the paths; some travel via A and some via B. An ant 
+drop some chemical substance called ``pheromone'' on the path it traverses. Other ants pick up the pheromone trail, and tend to  
+follow paths where pheromone concentration is higher. Due to probabilistic variations, one of the paths, either A or B will 
+be traveled by more ants and will have a higher pheromone concentration. This path will attract more ants. As a result, ants will 
+eventually tend to converge on the path that has been traversed the most. If the two path lengths are equal, then there is an equal
+probability for the ants to converge on the same path. However, if the path lengths are different, the ants traveling the shorter
+path will return sooner to the nest, thus increasing the pheromone concentration on the path. This will lead more ants to choose
+the shorter path, and eventually all ants will converge on this path.
+
+\begin{figure}[!htpb]
+	\centering
+	\epsfig{figure="Agents/ant1.eps", width=0.6\linewidth}
+	\caption{Foraging behavior of ants}
+	\label{fig:agents:ant1}
+\end{figure}
+
+Let us assume that, at any given point of time, $m_1$ ants have traveled path-1, and $m_2$ ants have traveled path-2. The 
+probabilities $p_1$ and $p_2$ of an ant traveling path-1 and path-2 respectively are given by
+
+\begin{align}
+	p_1 = \frac{(m_1 + k)^h}{(m_1 + k)^h + (m_2 +k)^h} \\
+	p_2 = \frac{(m_2 + k)^h}{(m_1 + k)^h + (m_2 +k)^h} 
+\end{align}
+\noindent
+where $k$ and $h$ are some empirical constants. It has been found that $k \approx 20$ and $h \approx 2$ provides a good fit
+to ant behavior.
+
+\index{ant colony optimization algorithm |see {ACO algorithm}}
+\index{ACO algorithm}
+We explain the {\em ant colony optimization} algorithm (ACO) with a problem analogous to the traveling salesman problem. Assume 
+that the $1, 2, \dots, n$ represent $n$ connected cities and that a large group of agents need to travel from node $1$ to node $n$. 
+Let the edge labels $c_{ij}$ represent the symmetric cost for traveling a path between nodes $i$ and $j$, not \`{a}-priori known 
+to the agents. The problem is illustrated with 4 cities in figure~\ref{fig:agents:ant2}, While the pioneering agents may explore 
+different paths, the goal is that the agents who start later should will tend to follow the least costly path.
+
+\begin{figure}[!htpb]
+	\centering
+	\epsfig{figure="Agents/ant2.eps", width=0.6\linewidth}
+	\caption{Ant colony optimization algorithm with traveling salesman problem}
+	\label{fig:agents:ant2}
+\end{figure}
+
+The problem has been modeled as a heuristic optimization model, and there has been a family of algorithms developed around it.
+The meta-heuristic followed in all the algorithms is as shown in algorithm~\ref{algo:agents:ant}. After initialization, all 
+the algorithms iterate over three phases, namely (a) a number of solutions are constructed by the ants, (b) these solutions are
+improved through a local search (optional), and (c) the pheromone trail is updated. At initialization, the graph is constructed
+the values of the empirical constants are set.  
+We elaborate the phases (a) and (c) as in the original algorithm proposed by Dorigo, where the phase (b) is not there.
+
+\begin{algorithm}[H]
+        \SetAlgoLined
+        \SetKwProg{proc}{procedure}{}{end}
+        \DontPrintSemicolon
+        \proc{ACO($p_1, p_2, \dots, p_n$)}{
+		Set parameters, initialize pheromone trails \;
+		\While{termination condition not met} {
+			Construct-Ant-Solutions \;
+			Apply-Local-Search (optional) \;
+			Update-Pheromones \;
+                } %EndWhile
+        } %EndProc
+        \caption{Ant Colony optimization meta-heuristic}
+        \label{algo:agents:ant}
+\end{algorithm}
+
+\paragraph{Construct-Ant-Solution}
+An agent, while at a node $i$ can travel to any of the nodes connected to $i$. Thus, a path solution comprise elements
+from a finite set $\mathbf{C} = c_{ij}: j \in \mathbf{D}_i$, where $\mathbf{D}_i$ represents the set of all nodes connected to 
+$\mathbf{C}$. At each iteration, $m$ agents create path solutions from the finite set $\mathbf{C}$. As an agent travels to city 
+$i$, a partial solution for the path (1--$i$) is created. When at city $i$, an agent extends the partial path to $j$. 
+
+\noindent
+Let $sp_i^k$ represent the partial path created by an agent, when at node $i$, and $FC(ap_i^k)$ represent the set of feasible 
+components to extend the path to node $j$.
+\begin{equation}
+	FC(sp_i^k) = \{ c_{ij}: j \in \mathbf{D}_i, j \text{ not yet visited} \}
+\end{equation}
+
+\noindent
+The probability for an ant $k$ at city $i$ going to city $j \in FC(sp_i^k)$ is given by
+\begin{equation}
+	p_{ij}^k = \frac{\tau_{ij}^\alpha . \eta_{ij}^\beta}
+		{\sum_{c_{ij} \in FC(sp_i^k)} \tau_{ij}^\alpha . \eta_{ij}^\beta}
+\end{equation}
+\noindent
+where 
+\begin{enumerate}
+	\item $\tau_{ij}$ is the pheromone deposit on path $ij$. It is initially zero, updated in phase (c) of each iteration,
+	\item $\eta_{ij} = \frac{1}{d_{ij}}$, where $d_{ij}$ is the estimate of cost of the path $ij$. If no estimate is available, 
+		$\forall i,j: \eta_{ij} = 1$, and 
+	\item $\alpha, \beta$ are constants that set relative importance of pheromone deposit and path cost estimate.
+\end{enumerate}
+
+\paragraph{Update-pheromone}
+At this phase, the agents who has successfully constructed a solution, updates the pheromone deposit $\tau_{ij}$ in each path 
+$ij$, which is a part of it's solution. The updated value of pheromone deposit is given by
+\begin{equation}
+	\tau'_{ij} = (1 - \rho).\tau_{ij} + \sum_{k=1}^m \Delta\tau_{ij}^k
+\end{equation}
+\noindent
+where
+\begin{enumerate}
+	\item $\rho$ is the evaporation rate of the pheromone
+	\item $\Delta \tau_{ij}^k = \frac{Q}{L_k}$, where $Q$ is a constant and $L_k = \sum_{ij \in path_k} d_{ij}$ is the cost 
+	of the path $path_k$ constructed by the agent $k$ ($L_k = \infty$ for unsuccessful construction).
+\end{enumerate}
+
+In this approach, the agents communicate and coordinate by changing the environment. The change is local, and only the
+agents visiting the locality sense the change. This type of communication is known as {\em stigmergy}~\citep{Heylighen:2016} 
+
+\subsection{Coordination without Communication}
+
+\index{common knowledge}
+So far, we have discussed the cases where agents communicate to coordinate their activities. But, in certain hostile environments,
+e.g. on a battleground, the communication may be unreliable, jammed or intercepted. In such cases, a team of agents may need to
+coordinate their activities with no or minimum communication. This is possible if an agent can anticipate the actions of other
+agents in a given situation. This implies that each agent need to have a model of the other agents, and need to assume that 
+other agents also possess such models. This is an example use of common knowledge, discussed in chapter~\ref{chap:knowledge}. 
+Such models are generally built by intensive co-training the agents prior to deployment. 
+
+

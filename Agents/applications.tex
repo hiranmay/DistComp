@@ -1,0 +1,64 @@
+\section{Applications of Agent Based Systems}
+
+It is advantageous to model an application as an agent-based system, when the application involves dynamic coordination of
+many system components, needs to process distributed and heterogeneous data, especially when the components or the data are distributed 
+over a number of administrative domains. Agent based systems have evolved in task and mission complexity since mid-1990s. A few 
+representative examples of agent based systems include business applications~\citep{Jennings:1996},
+intelligent manufacturing~\citep{Shen:2006}, e-governance~\citep{Chaabane:2015},drone swarms~\citep{Shrit:2017,Lomonaco:2018}, 
+coordination of multi-robot systems~\citep{Chen:2020}, and simulation~\citep{Davidsson:2007,Kim:2020}. In this section, we present 
+a case study of application of agent based systems in multimedia information retrieval.
+
+\index{information retrieval}
+Multimedia artifacts pertaining to a domain, such as cultural heritage, are generally curated by many agencies and there and 
+several independent archives. Being developed independently, the archives preserve different media forms, in different formats 
+and with different schema for archival metadata. While the archives collectively present a rich information source, the 
+fragmentation of information and heterogeneity of the resources present formidable challenge for semantic retrieval and/or 
+browsing though manual or automated means.
+
+An agent based architecture for integrating diverse multimedia archives of Indian Cultural Heritage has been presented 
+in~\citep{Ghosh:2008,Chaudhury:2011}. Figure~\ref{fig:agents:heritage} depicts the interactions amongst the classes of 
+agents in the system. In this architecture, each of the legacy repositories holding heritage data in
+multimedia format has been encapsulated as an autonomous agent, called the {\em repository agents}. Some of the
+repositories are based on multimedia databases, and implement media-based annotations (e.g. MPEG-7 descriptions) or indexing.
+Each of the Repository Agents is knowledgeable about the metadata, indexing scheme and retrieval/browsing interfaces for the 
+repository that it encapsulates. Further, the system is also populated with a set of mobile {\em media (processing) agents}, 
+which can travel to the repository sites and perform specific media-based retrieval tasks (e.g. image search using a 
+specific algorithm), thereby enhancing the retrieval capability of the repositories.
+
+\begin{figure}[htpb!]
+	\centering
+	\epsfig{figure="Agents/heritage-architecture.eps", width=0.6\linewidth}
+\caption{Agent-based architecture for Multimedia Information Retrieval for Indian Cultural Heritage}
+\label{fig:agents:heritage}
+\end{figure}
+
+A user of the system presents his query to a {\em user agent}. The system is populated with a set of User Agents, each of which
+implements one or a combination of different query paradigms, such as natural language text, query by example, etc. A user may
+choose a specific query interface depending on his preferences or the application needs. A User Agent encodes a query in an 
+internal query language that is expressive enough to support different query paradigms. 
+
+In general, there may be a significant difference between the query constructs and the repository organizations. A user query 
+needs to be reformulated for effective retrieval in a repository. A {\em coordinator agent} expands the query by collaborating 
+with a set of {\em ontology agents}, which encapsulate knowledge about Indian cultural heritage, which is available in a fragmented 
+manner in multiple administrative domains. The uniqueness of the ontology representation scheme used in this 
+applications is it's capability to encode audio-visual properties of the concepts (heritage artifacts) and their spatial and temporal
+structures over and above their semantic relations, and support for Bayesian reasoning model, which is more suitable for media
+data interpretation~\citep{Chaudhury:2015}. 
+
+The outcome of query expansion is a large and redundant set of elementary query components. In general, a repository agent
+can service a subset of these specifications. The next step involves development of retrieval plans for each of the repositories, 
+which is done through contract negotiation between the coordination and the individual repository agents. The repository agents,
+in turn, can sub-contract some of the retrieval tasks to the available media processing agents. Thus, the contract negotiation
+becomes a recursive process. Some of the eligible repositories are contracted the retrieval task by the coordinator after a 
+cost-benefit analysis~\citep{Ghosh:2004}. Once the results are available from the repositories, the coordinator collates
+them to produce the final retrieval results.
+
+\index{semantic broker}
+As explained in the paragraphs above, the system represents an example of distributed planning and data processing in multiple 
+stages. The key capability of query reformulation in this architecture arises from query expansion and contract negotiation. 
+The query expansion in this system is knowledge-based, as compared with combinatorial decomposition for federated SPARQL
+query processing as discussed in chapter~\ref{chap:knowledge}. We have seen information broker architecture in 
+chapter~\ref{chap:pubsub}. The coordinator performs the role of a {\em semantic broker} in this system.
+Another major advantages of the agent based architecture is the dynamic team formation in individual query contexts. This 
+enables the system to be dynamically populated or depopulated without service disruption, as well as dynamic load balancing.
+

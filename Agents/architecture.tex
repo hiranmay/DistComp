@@ -1,0 +1,218 @@
+\section{Agents and Multi-Agent Systems}
+
+\index{agent|textbf}
+\begin{definition} [agent]
+	An {\em agent} is an entity (a combination of hardware and software) that can make independent decisions or perform a task 
+	based on its environment, its knowledge and its experiences. 
+\end{definition}
+
+\index{environment of an agent}
+In the most abstract form, an agent is an entity that interacts with the environment. The environment is an abstraction of the 
+world around the agent comprising the entities it need to deal with. For example, the environment for a buyer agent operating 
+in an e-commerce market may be defined as a set of sellers in the market-place, the commodities being offered, and the parameters 
+of the commodities. The environment of an agent responsible for an industrial control process may include the material flow in 
+and out of the processing stations, and the environmental parameters like temperature, humidity and pressure. 
+%
+Thus, in order to interact with the environment, an agent need to have 
+\index{sensor} \index{actuator}
+\begin{itemize}
+	\item A set of sensors, with which it can sense the environment, and 
+	\item A set of actuators, with which it can attempt to change the environment to its favor. 
+\end{itemize}
+
+\noindent
+For example, a process control agent may sense it's environment with a set of thermometers, pressure gauge, etc. and control
+the process parameters by turning on or off certain devices through a set of actuators.
+
+\begin{figure}[!htbp]
+	\centering
+	\epsfig{figure="Agents/agent.eps",width=0.6\linewidth}
+\caption{Abstract architecture of an agent} 
+\label{fig:agents:agent}
+\end{figure}
+
+\index{action repertoire}
+\index{percept!of an agent} 
+The abstract architecture of an agent is shown in figure~\ref{fig:agents:agent}. In the figure, \texttt{P} represents the 
+percept of an agent as a result of sensing and \texttt{A} represents the action taken by it. 
+Percept of an agent is determined by it's sensors. Similarly, an agent can choose to perform an action from an {\em action 
+repertoire}, that is determined by the capabilities of it's actuators. 
+%
+In the most general sense, an agent maps a sequence of percepts to an action. Thus, the behavioral model of an agent can be 
+represented as
+
+\begin{equation}
+	agent: P^* \rightarrow A
+\end{equation}
+
+\noindent
+where $P^*$ denotes its percept sequence, and $A$ its action repertoire.
+
+\index{reactive agent} 
+A critical part of the agent is the processing that it performs and it's memory, which determines it's level of ``intelligence''. 
+A purely reactive agent, without any memory, provides a direct mapping from its current percept to one of its action. For example, 
+the control system in a refrigerator switches on or switches off its cooling system based on the sensed temperature.
+% ~\footnote{It
+% may be an overkill to model such simple systems as ``agents'', but such examples are widely used for academic purposes.}. 
+%
+\index{deliberative agent} \index{utility based agent}
+A deliberative agent, on the other hand, possesses a complex memory hierarchy. It assigns some {\em utility values} to the different 
+possible environmental states, reasons with the situation, explores the alternatives, and choose to perform the action that is likely 
+to make the environment most favorable to it. For example, in a game of chess, an agent senses and evaluates the current board positions,
+evaluates the effects of possible moves, and chooses the one that maximizes its probability to win. 
+%
+A deliberative agent may also accumulate it's experience in it's memory and learn to improve it's performance from the experience. 
+An agent with significant deliberative power and learning capability is better equipped to perform complex real-life tasks 
+{\it autonomously}. 
+
+\index{self-interested agents} \index{rational agents}
+In the rest of the chapter, We shall assume agents to be deliberative, with varying degree of intelligence. We shall also assume that
+the agents are {\em self-interested}, i.e. they want to increase their own benefits, and that they are {\em rational}, i.e. their
+actions will be solely guided by their self interest. 
+
+\subsection{The Environment}
+\label{sec:agents:environment}
+
+\index{environment of an agent|textbf}
+\begin{definition} [environment]
+	The {\em environment} of an agent refers to the parameters of the milieu comprising of physical, computational and human elements, 
+	where an agent operates and which affects the actions of an agent. 
+\end{definition}
+
+It is necessary to understand the nature of the environment in which an agent will 
+operate in order to appreciate an agent based system. The environment of an agent can be broadly characterized as follows:
+
+\index{environment of an agent!classification of}
+\begin{enumerate}
+	\index{discrete environment} \index{continuous environment}
+	\item {\em Discrete or Continuous}: A discrete environment comprises of a finite number of distinct states, for example
+		the state of a chess-board at any point of time during a game. The environment is said to be continuous, if there
+		are infinitely many states, such as the environment encountered while driving.
+	\index{accessible environment} \index{inaccessible environment} \index{observable environment} 
+	\item {\em Fully accessible or partly accessible}: An environment is said to be accessible (observable), if it's complete state is 
+		perceivable to an agent, e.g. a chess-board. An environment is partially accessible (inaccessible) when only a subset of the
+		state variables are perceivable to an agent at any given point of time.
+	\index{static environment} \index{dynamic environment}
+	\item {\em Static or Dynamic}. If the state of the environment does not change without the action of an agent, it is said
+		to be static. If it can change even without the action of an agent, it is said to be dynamic. 
+		When an environment is inhabited by a limited number of agents, and the environment can change only by the actions
+		of the other agents, besides that of the agent under consideration (e.g. by the moves of the opponent in a chess game), 
+		the environment can be characterized as {\it semi-static}.
+	\index{deterministic environment} \index{non-deterministic environment}
+	\item {\em Deterministic or non-deterministic}: If the state of the environment changes predictably with an action of an agent,
+		it is said to be deterministic, e.g. a chess-board. Otherwise, it is said to be non-deterministic, e.g. a process
+		control system.
+	\index{episodic environment} \index{non-episodic environment}
+	\item {\em Episodic or Non-episodic}: If the environment comprises of finite episodes (time-intervals) such that the action
+		of an agent is guided by events in that episode only and the effects of the actions of an agent on the environment
+		is observed within that episode only, it is said to be an episodic environment. Examples of episodic environment 
+		are a chess tournament (comprising several games), daily trips with an autonomous automobile, etc. If no such 
+		episodes exist during the lifetime of an agent, an environment is said to be non-episodic, e.g. a robotic vehicle 
+		on a Mars mission, which keeps on exploring till the end of it's life.
+\end{enumerate}
+
+\noindent
+
+\subsection{Multi-agent Systems}
+\label{sec:agents:mas}
+
+In this chapter, we shall primarily deal with the distributed computing aspects of multi-agent systems.  
+
+\index{agent-based system|textbf} 
+\begin{definition} [multi-agent system, agent-based system]
+	A {\em multi-agent system} (or an {\em agent-based system}) is a system, where a number of autonomous agents cohabit an 
+	environment. The system functionality is achieved through coordination of these agents. 
+\end{definition}
+
+\noindent
+Examples of real-life applications involving multi-agent systems include power grid controller~\citep{Kantamneni:2015}, intelligent 
+design and manufacturing~\citep{Shen:2001}, modeling financial market~\citep{Samanidou:2007} and drone 
+swarms~\citep{Shrit:2017,Lomonaco:2018}. 
+%
+The general architecture of a multi-agent system is shown in figure~\ref{fig:agents:mas}.
+
+\index{agent-based system!architecture}
+\begin{figure}
+	\centering
+	\epsfig{figure="./Agents/mas.eps",width=0.6\linewidth}
+	\caption{Multi-agent Systems}
+	\label{fig:agents:mas}
+\end{figure}
+
+In a multi-agent system, a set of agents $A_1, A_2, \dots A_n$ are situated in a common environment. In general, they are hosted
+on different computing nodes, which are geographically distributed, and/or logically distributed over different subnetworks in a
+network. An individual agent may be able to sense only a part or dimension of the environment, as represented by the dotted lines 
+around the agents, depending on its sensors. For example, a robot equipped with a camera may be able to see only in its vicinity 
+and an agent equipped with a thermometer may sense the local temperature. The sensed segment of the environment of an agent may or 
+may not overlap with others. The agents communicate with each other over the underlying network infrastructure. 
+
+\subsection{Agent Embodiment}
+
+\index{agent!embodiment of}
+The processes that control the behavior of an agent can either be implemented on dedicated hardware, or on general purpose
+computers. They are called {\em embodied agents} and {\em non-embodied agents} (or {\em software agents}) respectively. 
+
+\index{embodied agent|textbf} 
+\begin{definition}[embodied agents]
+	An {\em embodied agent} is a hardware-software combination capable of independent decision-making and actions. 
+	The sensors and actuators are realized in hardware, depending on the functional requirements of the agent, and 
+	the environment they are situated in. The autonomous decision-making capability is generally built into the software. 
+\end{definition}
+
+\noindent
+Examples of embodied agents include humanoid robots, autonomous vehicles and factory automation robots. They are equipped with 
+sensors like camera and haptic sensors, and actuators like arms to hold and move objects, wheels or legs for locomotion. Thus,
+the embodied agents can interact with the real environment.
+
+\index{non-embodied agents|see {software agent}} \index{software agent|textbf}
+\begin{definition} [software agent]
+	A {\em software agent} is a piece of software (with independent decision-making capability) that are implemented on 
+	general purpose computers. It does not have a dedicated hardware embodiment, specifically sensors and actuators. 
+\end{definition}
+
+The environment of software agents is a virtual (computational) environment consisting of other agents, and legacy software 
+components like files, databases and user interfaces. In an agent-based system architecture, a wrapper encapsulates the legacy 
+software and exports an agent-compliant interface. The process is called {\em agentification} and is shown in 
+figure~\ref{fig:agents:agentification}. The sensors and actuators for software agents are message communication primitives and 
+other APIs available on the platform. 
+
+\begin{figure}[!htbp]
+	\centering
+	\epsfig{figure="./Agents/agentification.eps,width=0.6\linewidth}
+	\caption{Agentification of legacy software}
+	\label{fig:agents:agentification}
+\end{figure}
+
+\subsection{Mobile Agents}
+
+\index{mobile agent}
+Mobility in agent-based system has two connotations, and can be ambiguous. For embodied agents, mobility refers to 
+locomotion, i.e. capability of the agent to change it's physical (geographical) location. However, the term {\em mobile
+agent} is generally applied to a class of software agents that can migrate over the network. 
+
+\begin{definition} [mobile agent]
+	A {\em mobile agent} is a software agent that can move (on its own volition) from one computing node to another
+	over a computer network, provided that the node has appropriate and adequate infrastructure for the agent to execute, 
+	and the node agrees to host the agent.
+\end{definition}
+
+Mobile (software) agents are useful when (a) the system needs to deal with huge volume of distributed data, and (b) it is neither 
+possible to move the data to a central node for processing, nor to distribute the processing logic on the different nodes. In such
+circumstances, mobile agents incorporating the processing logic can visit the nodes hosting data, access and process the data locally, 
+and return with the results. For example, in a retrieval problem, a mobile agent with a proprietary retrieval logic may originate 
+from a user node, traverse the various nodes hosting document resources, pick-up the desired documents from each repository, 
+and finally reporting back to the user, as shown in figure~\ref{fig:agents:mobile}. A mobile agent may take an independent
+decision to cut short it's itinerary when sufficient number of documents have been collected.  
+
+\begin{figure}[!htbp]
+	\centerline{
+		\epsfig{figure="./Agents/mobile.eps,width=0.8\linewidth}
+	}
+	\caption{Mobile agent}
+	\label{fig:agents:mobile}
+\end{figure}
+
+There is an importance difference between the mobility of the embodied and software agents. While the embodied agents may change 
+physical location, the software continues to run on the same hardware. In contrast, the binding between the hardware and software 
+of a mobile agent changes  when a software agent migrates to a new host. This results in a new aspect in distributed computing
+paradigm, besides inviting several compatibility and security issues.
