@@ -1,0 +1,53 @@
+\section{introduction}
+
+Modern information systems often deals with huge volumes of data. For example, the social media site Facebook has over $300$ petabytes 
+of accumulated data (including $250$ billion photos) and adds about $4$ petabytes of data per day~\footnote{See 
+\url{https://www.brandwatch.com/blog/facebook-statistics/}}. The data is profitably used for analyzing social 
+networks, user preferences and sentiments, targeted marketing, and such other purposes. 
+%
+\index{Sloan digital sky survey}
+In scientific applications, {\em Sloan Digital Sky Survey} (SDSS) project~\footnote{See \url{https://www.sdss.org}.} aims at creating 
+detailed three-dimensional maps of the Universe, with deep multi-color images and spectra for more than three million astronomical 
+objects using telescopes and other instruments distributed over three locations in northern and southern hemispheres. The data 
+is analyzed by collaborative effort of about of dozen of institutions and is used by many individuals and institutions around the 
+globe. At the time of writing this book, the project has covered about one third of the sky and has accumulated about 116 TB of data. 
+%
+\index{community earth system model}
+Yet another example of such huge collection of data is the {\em Community Earth System Model} (CESM) maintained by National Center 
+for Atmospheric Research~\footnote{See \url{https://ncar.ucar.edu/}.}. It comprises of five separate models simulating the Earth's 
+atmosphere, ocean, land, land-ice, and sea-ice, plus one central coupler component, where the different climatic data is updated 
+on periodic basis. The dataset is used for weather prediction and similar other applications.
+
+Ideally, the data gathered from multiple sources need to be brought to one location for analysis. However, storing and processing 
+such huge volumes of data is beyond the realm of even the largest computer available. Besides, the network bandwidth can be a 
+hindrance for moving the data to a central location. For example, copying 1TB of data on a 1Gbps link takes more than two minutes!
+%
+\index{big data system}
+Therefore, there is a need to store and process the data close to their sources in a distributed fashion in such {\em big data}
+systems, and yet to get insights by analyzing the entire data as a whole. It may be noted that these information systems hold 
+heterogeneous kinds of data, such as transaction data, natural language text, images, and other sensory data, a large part of 
+which is unstructured.
+Sometimes, there are large redundancies in the generated data, e.g. process data during normal execution of a system. In such
+cases, it is not prudent to store all data that are generated, but nevertheless they need to be analyzed in real time to 
+detect trends and any process abnormality. These type of data, that exist in the system for a short time, is known as dynamic
+data. In many examples, such as video streaming from multiple cameras, the arrival rate of such dynamic data may be very high.
+
+In this chapter, we explore the methods for storing and analyzing large volumes of data in a distributed fashion. Besides data 
+volume, their veracity, speed, unstructured nature and dynamic nature present formidable challenge for distributed data processing 
+in such systems. System availability and fault-tolerance also need special attention in most of such systems.
+%
+We start this chapter with architecture of distributed storage that can hold peta-bytes of data with redundancy. This is followed
+by distributed file systems, which ensures system availability. Further, we discuss distributed indexing that helps in retrieval
+of the files stored in large distributed storages. We move on to no-SQL databases that facilitates storage and retrieval of large
+volumes of unstructured data. This is followed by an architecture for distributed data analytics, and a few distributed data and 
+stream clustering algorithms that exemplifies and are generally the initial steps in any data analytics activity. Finally, we conclude 
+the chapter with a summary and some salient observations. 
+
+% \input ./Bigdata/whatis.tex
+\input ./Bigdata/storage.tex
+\input ./Bigdata/dfs.tex
+\input ./Bigdata/nosql-db.tex
+\input ./Bigdata/analytics.tex
+\input ./Bigdata/conclusions.tex
+\input ./Bigdata/exercises.tex
+

@@ -1,0 +1,376 @@
+\section{NoSQL Databases}
+\label{sec:bigdata:nosql}
+
+\index{NoSQL database|textbf}
+Data processing systems have traditionally depended on relational database to deal with structured data. However, a relational
+database is not suitable for storing unstructured data (such as text, images, sensor data, etc.) that are generated in large
+quantity contemporary distributed systems. Further, relational databases use ``join'' operations extensively between multiple 
+tables to create a required view of data. In a distributed storage system, the different tables may be stored in different
+locations, thereby making a join operation computationally expensive and slow. Some distributed relational database systems
+use shared-disk architecture, where all processing nodes access the same data from a central repository hosted on a SAN.
+These systems provide consistent data at all times, but are also inherently difficult to scale. Moreover, a relational database relies 
+on fixed schema definitions, and are difficult to extend when new data types need to be included.
+%
+The limitations of the relational databases has led to development of various other data models for distributed storage of big data. 
+They are collectively known as {\em NoSQL} databases. Some authors~\citep{Han:2011} prefer to interpret the term No-SQL as ``not 
+only SQL'', not to preclude relational databases, which are also useful in big-data systems in certain contexts. We explore some of 
+important No-SQL data models in the following sections.
+
+\subsection{Key-value and Document databases}
+\label{sec:bigdata:key-value}
+
+\index{CURD}
+Key-value databases provide  a simple data model, where a piece of data is indexed by a unique key, and can be accessed through it. 
+An example of the data-model is shown in figure~\ref{fig:bigdata:key-value}. Note that the data is treated as an unstructured bit-stream. 
+The structure of the data is implicitly encoded  in the application logic. For example, if the data represents an image in JPEG format, 
+the application that processes the image interprets the data according to JPEG encoding rules. A key-value data-model supports simple 
+CRUD (Create, Read, Update and Delete) operations. The main advantage of the data-model comes from its simplicity, resulting in low 
+latency and high throughput. A DFS can be considered to implement big key-value data-structure, with ``file-path'' as the key and its 
+contents as the ``data''.
+
+\begin{figure}[htbp!]
+	\centerline{
+		\epsfig{figure=./Bigdata/key-value.eps,width=0.6\linewidth}
+	}
+	\caption{Key-value database}
+	\label{fig:bigdata:key-value}
+\end{figure}
+
+% \subsection{Document databases}
+% \label{sec:bigdata:document}
+
+\index{XQuery} \index{MongoDB}
+A document database is similar to a key-value database, with a difference that the data can be semi-structured documents, like an XML 
+or a JSON file. Figure~\ref{fig:bigdata:document} depicts the structure of a document data model, where a few articles are indexed by 
+their DOI (digital object identifier). Like in key-value databases, it is possible to fetch a document, in its entirety, with it's key. 
+Moreover, it is also possible to retrieve only a part of the document, for example, the author of a document. Further, it is possible 
+to do an aggregation (such as fetch the title and the author) and example-based query (e.g. fetch a document if a part of the title 
+matches ``SQL'') using appropriate query languages e.g. XQuery~\citep{XQuery:2017}. 
+% {\em MongoDB} is an example of a document database, and it's use in storing bibliographic database is illustrated in 
+% Appendix~\ref{appendix:mtools}.
+
+\begin{figure}[htbp!]
+	\centerline{
+%		\scalebox{0.8}{\input{./Bigdata/document.pgf} }
+		\epsfig{figure=./Bigdata/document.eps,width=0.8\linewidth}
+	}
+	\caption{document database}
+	\label{fig:bigdata:document}
+\end{figure}
+
+\subsubsection*{MapReduce algorithm}
+
+We illustrate the use of key-value/document databases in big data applications with a simple example. Let us assume that there are a 
+number of text documents and that we need to find the count of different words in the document. A distributed algorithm,
+known as the {\em MapReduce} algorithm~\citep{Dean:2004}, to compute the count is described in algorithm~\ref{algo:bigdata:MapReduce}.
+The algorithm works with two sets of asynchronous processes. It is assumed that the documents are stored in a document database 
+with document-name as the key. An instance of the {\em Map}() procedure is invoked for every document, identified by it's key. 
+It scans through the document and emits message in form of a key-value pair $\langle$ word, 1 $\rangle$ for every word encountered 
+in the document.
+% ~\footnote{Note that {\em Map}() does not count the number of occurrences of a word in a document.}. 
+An instance of {\em Reduce}() function is executed with each possible word as the key, where the total number of such messages for 
+the word (originating from all instances of {\em Map}() are counted and reported again as a key-value pair $\langle$word,count$\rangle$, 
+which can again be stored in a key-value database. All instances of {\em Map}() and {\em Reduce}() processes may run concurrently,
+coordinated by a {\em job tracker}.
+The communication between {\em Map}() and {\em Reduce}() processes can be through a message passing algorithm, which can again
+be based on a (local) key-value data-store.
+
+\index{MapReduce algorithm|textbf}
+\begin{algorithm}[!htpb]
+	\DontPrintSemicolon
+	\SetAlgoLined
+	\SetKwProg{proc}{procedure}{}{end}
+	\proc{Map(key,value)}{
+		$\vartriangleright$ key = document name\;
+		$\vartriangleright$ value = document contents\;
+		\For{each word w in value} {
+			emit(w,1)\;
+		} % EndFor
+	} % EndProc
+	\proc{Reduce(key,value)}{
+		$\vartriangleright$ key = a word\;
+		$\vartriangleright$ value = a list of counts\;
+		count $\leftarrow$ 0\;
+		\For{each v in value} {
+			count $\leftarrow$ count + 1\;
+		} % EndFor
+		emit (key,count)\;
+	} % EndProc
+	\caption{MapReduce algorithm}
+	\label{algo:bigdata:MapReduce}
+\end{algorithm}
+
+\noindent
+% We have illustrated the algorithm with documents and word-counts. A complete Java code for this example is presented in 
+% Appendix~\ref{ax:hadoop}.  
+
+In general, {\em Map}() maps of a set of key-value pairs to another, and {\em Reduce}() results 
+in reduction of a list as follows:
+
+% \begin{flalign}
+% 	{\em \text{Map}}(): 	\langle k_1, v_1 \rangle 			&\rightarrow \langle k_2, v_2 \rangle \\
+% 	{\em \text{Reduce}}():  \langle k_2, \texttt{list}_1(v_2)\rangle 	&\rightarrow \langle k_2, \texttt{list}_2(v_2) \rangle 
+% \end{flalign}
+\begin{flalign}
+	Map(): 		\langle k_1, v_1 \rangle 		&\rightarrow \langle k_2, v_2 \rangle \\
+	Reduce():  	\langle k_2, list_1(v_2)\rangle 	&\rightarrow \langle k_2, list_2(v_2) \rangle 
+\end{flalign}
+
+\noindent
+where $list_2$ is much shorter (usually with 0 or 1 member) than $list_1$. This justifies the names of the two
+procedures. 
+
+MapReduce framework for parallel processing of large data sets has been developed as a part of the Apache Hadoop ecosystem. 
+In general, the input data is partitioned into $M$ splits, with a worker (an instance of {\em Map}()) working on each. Similarly, the 
+intermediate key space can be partitioned into $N$ keys, and there is $M \times N$ message communication channels. Data is exchanged
+between {\em Map}() and {\em Reduce}() exclusively through this message passing technique, by writing and reading files on a DFS,
+which proves to be a significant overhead for the algorithm. While MapReduce initially used it's own scheduler, it has migrated 
+over to Apache YARN
+% ~\footnote{see \url{https://hadoop.apache.org/docs/current/hadoop-yarn/hadoop-yarn-site/YARN.html}.} 
+for job scheduling and cluster resource management to improve it's scalability. 
+
+\subsection{Wide Column databases} 
+
+The wide column database resembles an SQL database in that the data is organized
+in rows and columns, with the difference that table-space is not allocated to every column. The columns are grouped
+into a set of {\em column families}, based on their common usage. Within a column family, individual columns are 
+stored as key-value pairs, with the key indicating the column title. The data is indexed as a two dimensional
+array with the primary key representing the rows and the secondary key representing the column families. 
+%
+Figure~\ref{fig:bigdata:wide-column} depicts the organization in a wide-column database, with four column families 
+and three data rows. There are several advantages of this organization.
+\begin{itemize}
+	\item Since table space is not allocated for every table entry, compact representation for sparse tables
+		is possible.
+	\item It is possible to introduce new column types within a family without disturbing the overall schema.
+		However, addition of new column families or deletions of existing families are not allowed.
+	\item All data from each row is not collocated on the disk, but data from the same column family and from 
+		the same row are written together. Thus, it is possible to access the entries in a column family, 
+		without accessing the entire row. This is advantageous for many applications, since the column 
+		families are designed based on the common usagenof data. However, the complete data for a single
+		row requires multiple reads and join operations.
+	\item The successive rows for a column family are stored in contiguous ranges on the disk (called a {\em
+		tablet}), so that retrieving a column family for successive rows becomes fast. This can be exploited 
+		with a careful primary key design based on the application requirement. 
+\end{itemize}
+\noindent
+ 
+Wide-column databases can support huge tables with petabytes ($10^{15}$ bytes) of data. They are useful for storing sparse data, 
+such as IoT sensor data, time-series data, user preferences for commodities and geographic information. However, they may not 
+be the best choices for applications with ad-hoc query patterns and high level aggregation needs.
+%
+\index{Bigtable} \index{HBASE} \index{DynamoDB}
+Google's Bigtable~\citep{Chang:2008} and Hadoop's HBASE
+~\footnote{see \url{https://hbase.apache.org/}.} 
+are implementations of 
+wide-column databases. Another widely used implementation of wide-column database is Amazon DynamoDB~\citep{Sivasubramanian:2012}.
+Some of the wide-column databases support time-stamp as a third dimension to the tables, allowing multiple versions of data for 
+the same row and the same column family to be stored and accessed. 
+
+\begin{figure}
+	\centerline{
+		\epsfig{figure=./Bigdata/wide-column.eps,width=\linewidth}
+	}
+	\caption{Wide-column database}
+	\label{fig:bigdata:wide-column}
+\end{figure}
+
+\subsection{Graph databases}
+\label{sec:bigdata:graph}
+
+As the name suggests, the data in a graph database is organized in a graph $\langle \mathcal{V}, \mathcal{E} \rangle$, where the 
+vertices $\mathcal{V}$
+represents the data, and the edges $\mathcal{E}$ represent the relations between them. In general, the vertices can contain arbitrary
+types of data, e.g. a scalar, a string, a document, or a set of key-value pairs. An vertex may also be labeled with some metadata, 
+indicating its type and/or structure. 
+%
+An edge is usually directed and labeled, representing the semantics of the relation between the pair of vertices that it connects. 
+The directed nature of an edge represents the semantics of the relation; it has nothing to do with graph-traversal mechanism. A
+an edge can be traversed in either direction provided appropriate data-structure is maintained.
+The labels can also be further quantified with qualifiers. There can be multiple edges connecting a pair of vertices representing
+a different relations existing between them. 
+%
+Note that the label of a vertex or an edge represents its semantic category, and not it's unique identifier. There can be several 
+vertices or edges in a graph with the same semantic label. In addition, a vertex or an edge can be associated with a unique identifier
+for referencing and indexing.
+%
+Figure~\ref{fig:bigdata:graph} depicts a few entries in a graph database, which illustrates it's properties described above. In the
+figure, {\bf v1}, {\bf v2}, etc. represent unique identifiers for the vertices, and {\bf e1}, {\bf e2}, etc. represent that for the
+edges. The non-unique vertex and edge labels follow the identifiers in the diagram in italics (e.g., {\it person}, {\it spouse-of},
+etc.). The nodes contain semi-structured data that can be stored as key-value pairs or documents. Some edge labels, like  {\it member of} 
+is qualified with number of years of membership.
+%
+The graph illustrated in the diagram can be characterized as a directed, attributed multi-graph, which supported by most of the
+existing graph-databases~\citep{Junghanns:2017}. A few graph databases support hypergraphs and hypervertices, which we shall not 
+discuss in this chapter. 
+
+\begin{figure}
+	\centerline{
+%		\scalebox{0.6}{\input{./Bigdata/graph.pgf} }
+		\epsfig{figure=./Bigdata/graph.eps,width=0.8\linewidth}
+	}
+	\caption{Graph database}
+	\label{fig:bigdata:graph}
+\end{figure}
+
+\index{Property Graph Model|see {PGM}} \index{PGM}
+\index{RDF}
+There are two major data-models for representing graph data: (a) {\em Property Graph Model} (PGM), and (b) {\em Resource 
+Description Framework} (RDF). While there is significant research interest in RDF, the commercial graph databases support PGM. 
+In particular, most of them support {\em Apache TinkerPop} framework~\citep{Rodriguez:2015} for graph databases and graph analytic 
+systems. We shall discuss PGM in the following text, and defer our discussions for RDF till chapter~\ref{chap:knowledge}.
+
+A graph has an important property called {\em index-free adjacency}, by virtue of it's edges, which provides a native computing 
+facility. Thus, each node in a graph acts as an index to its adjacent nodes. A graph database can store and utilize the edge 
+information for computation purposes. We illustrate a distributed algorithm with the graph depicted in figure~\ref{fig:bigdata:pregel}. 
+The graph consists of six nodes, named A through F, and are initialized randomly with some scalar values as shown next to the nodes
+in the figure. A node sends messages to it's adjacent nodes through the outgoing edges to share it's value. On receiving the messages 
+from via the incoming edges, a node recomputes it's value as the maximum of it's own value and the values received from the nodes
+that connect to it. The update of a value in any of the nodes triggers a fresh recomputation cycle. The process stops when the values 
+at all the nodes stabilize. We ignore the dashed rectangles labeled {\bf P} and {\bf Q} for the moment; we shall explain their 
+significance later in the text.
+
+\begin{figure}
+	\centerline{
+		\epsfig{figure=./Bigdata/pregel.eps,width=0.8\linewidth}
+	}
+	\caption{Example graph to illustrate Pregel algorithm}
+	\label{fig:bigdata:pregel}
+\end{figure}
+
+\subsubsection*{Pregel Algorithm}
+
+\index{gossip protocol}
+In the {\em vertex centric} Pregel algorithm~\citep{Malewicz:2010},
+% ~\footnote{The name of the algorithm is to honor Leonhard Euler, whose famous theorem inspired by the seven bridges of K\"{o}nigsberg 
+% on river Pregel, provided the foundation of graph theory.},
+each vertex can be a computing node and implements a {\em vertex function}, the algorithm for which is shown in 
+algorithm~\ref{algo:bigdata:pregel}. A brief explanation of the algorithm is as follows. A synchronized {\em superstep} consists of 
+each of the vertices executing the algorithm in parallel, synchronized at it's end. Each computing node hosting one or more vertex 
+functions is called a {\em worker node}, and the supersteps are synchronized by a {\em master node}. A vertex can be either of two
+states: active or inactive. All the vertices are in active state at the beginning of superstep 0. During the superstep,
+each vertex initializes its value $v$ and sends messages down its outgoing edges with its value. At the end of the superstep, each 
+vertex {\em votes to halt} and becomes inactive. In any of the subsequent supersteps, a vertex becomes active and executes the
+algorithm, only if it receives at least one message via it's incoming edges. It computes the new value for the vertex according 
+to the problem specification, e.g. it is computing the maximum in this example. If the value of the vertex changes, it sends 
+messages via the outgoing links with its new value. At end of every superstep, the vertex votes to halt and becomes inactive.
+The iteration terminates, when none of the vertices receives any message in a superstep, and all of them go inactive together.
+It is an example of {\em Gossip protocol} discussed in chapter~\ref{chap:gossip}, used for computing data aggregate.
+
+\index{Pregel algorithm|textbf}
+\begin{algorithm}[!htpb]
+	\DontPrintSemicolon
+	\SetAlgoLined
+	\SetKwProg{proc}{procedure}{}{end}
+	\proc{Pregel()}{
+		\eIf{superstep = 0} {
+			initialize $v$ \;
+			send outgoing messages( $v$ )\;
+		}
+		{
+			receive incoming messages( $v_{in}$ )\;
+			compute( $v$ )\;
+			\If{$v$ changes}{
+				send outgoing messages( $v$ )\;
+			} %EndIf
+		} % EndIf	
+		vote to halt\;
+	} % EndProc
+	\caption{Pregel algorithm for vertex-oriented computation}
+	\label{algo:bigdata:pregel}
+\end{algorithm}
+
+\begin{figure}[htbp!]
+        \subfigure[Super-step 1]{
+                \begin{minipage}{0.5\linewidth}
+                \centerline{
+			\epsfig{figure=./Bigdata/pregel1.eps,width=0.8\linewidth}
+                }
+                \end{minipage}
+        }
+        \subfigure[Super-step 2]{
+                \begin{minipage}{0.5\linewidth}
+                \centerline{
+			\epsfig{figure=./Bigdata/pregel2.eps,width=0.8\linewidth}
+                }
+                \end{minipage}
+        }
+        \subfigure[Super-step 3]{
+                \begin{minipage}{0.5\linewidth}
+                \centerline{
+			\epsfig{figure=./Bigdata/pregel3.eps,width=0.8\linewidth}
+                }
+                \end{minipage}
+        }
+        \subfigure[Super-step 4]{
+                \begin{minipage}{0.5\linewidth}
+                \centerline{
+			\epsfig{figure=./Bigdata/pregel4.eps,width=0.8\linewidth}
+                }
+                \end{minipage}
+        }
+        \subfigure[Super-step 5]{
+                \begin{minipage}{0.5\linewidth}
+                \centerline{
+			\epsfig{figure=./Bigdata/pregel5.eps,width=0.8\linewidth}
+                }
+                \end{minipage}
+        }
+        \subfigure[Super-step 6]{
+                \begin{minipage}{0.5\linewidth}
+                \centerline{
+			\epsfig{figure=./Bigdata/pregel6.eps,width=0.8\linewidth}
+                }
+                \end{minipage}
+        }
+	\caption{Super-steps for Pregel algorithm}
+        \label{fig:bigdata:Pregel-supersteps}
+\end{figure}
+
+The successive supersteps of the Pregel algorithm for the example problem is illustrated in 
+figure~\ref{fig:bigdata:Pregel-supersteps}(a)--(f). We have used the following conventions in the diagram. 
+%
+A solid edge in the graph means that the value of the originating node has changed in this superstep, and it will send a message 
+at the end of this superstep. 
+A shaded vertex means that the vertex did not not receive any message and is inactive in this superstep. A vertex whose value does 
+not change at a superstep, does not emit an outgoing message.
+%
+A dashed edge indicates that the value of the originating node has not changed in this superstep, and it will not send a message 
+at the end of the superstep; however, the message emitted in the last step is received by the destination node at the beginning 
+of this superstep. A dotted edge means that there is no incoming message down the edge at the beginning of the superstep.
+%
+In the figures, note how the nodes progressively stops sending and receiving messages and going inactive. Finally, the process terminates 
+at superstep 6, when all vertices are inactive together. 
+
+
+The algorithm is based on message passing only, and does not assume any shared memory. In principle, the vertex function for each of
+the vertices can be scheduled on an independent processing node. To avoid too much message passing overheads, the vertex functions 
+for the vertices with greater connectivity can be scheduled on the same node. {\em Vertex cut algorithms} can be used to partition a 
+graph to optimize degree of parallelism and inter-processor message exchanges. We have shown two possible partitions enclosed by
+dotted rectangles and marked {\bf P} and {\bf Q} in figure~\ref{fig:bigdata:pregel}.
+Though it is possible to implement the graph algorithm with a series of MapReduce invocations, it would require the entire state of 
+the graph be communicated across the stages of computation. Pregel algorithm is more efficient in terms of message communication
+as only the change data need to be communicated across the connected nodes.
+A practical use of Pregel algorithm is in page-rank computation~\citep{Page:1999} in Google search engine.
+
+\index{Giraph}
+The open source implementation in Apache Giraph~\citep{Tian:2013} improves upon Pregel algorithm.
+In this approach, a partition of the graph include the {\em internal vertices} that constitutes the partition, as well as the {\em 
+boundary vertices} that are proxies for the internal vertices in other partitions which receive messages from any of the internal
+vertices of the current partition. Subgraphs for partitions {\bf P} and {\bf Q} (in figure~\ref{fig:bigdata:pregel}) is shown in 
+figure~\ref{fig:bigdata:giraph}. The boundary nodes are shown as shaded circles in the diagram. Each worker node takes a {\em
+graph-centric} approach and updates the entire partition during a superstep. If there is a change in a boundary vertex, it sends
+a message to the corresponding internal vertex in another partition, which makes the receiver partition active and triggers a recomputation 
+in the partition in the next superstep. The process terminates when there is no message flow at the end of a superstep, and all
+partitions become inactive. This approach reduces inter-processor message communication by a large extent and makes the process
+efficient.
+
+\begin{figure}
+	\centerline{
+%		\scalebox{0.6}{\input{./Bigdata/giraph.pgf}}
+		\epsfig{figure=./Bigdata/giraph.eps,width=0.8\linewidth}
+	}
+	\caption{Graph partitions for Giraph algorithm}
+	\label{fig:bigdata:giraph}
+\end{figure}
+

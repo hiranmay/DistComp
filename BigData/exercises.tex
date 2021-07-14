@@ -1,0 +1,25 @@
+
+\section*{Exercises}
+
+\begin{enumerate}
+	\item Hand simulate and verify the super-steps in Pregel algorithm as shown in figures~\ref{fig:bigdata:Pregel-supersteps}(a)--(f).
+		Is it possible for a vertex to go inactive in one super-step, but to become active again at a subsequent super-step?
+	\item Consider the following data-points in a two-dimensional space: 
+		$(1.9,0.9)$, $(0.9,0.8)$, $(2.2,1.3)$, $(1.8,1.2)$, $(1.9,1.8)$, $(2.1,1.7)$, $(1.8,2.2)$, $(1.1,0.8)$, $(2.1,0.9)$, 
+		$(0.8,1.2)$, $(0.9,1.7)$, $(2.2,2.2)$, $(1.1,1.9)$, $(1.2,2.3)$, $(1.2,1.2)$, and $(0.8,2.1)$. 
+
+		\begin{enumerate}
+			\item Write a program for K-Means algorithm and partition the data into two categories. Report the number
+				of iterations it takes to complete.
+			\item Choose different seeds for the initial cluster centers randomly, and explain the results.
+		\end{enumerate}
+	\item Implement the peer-to-peer architecture for distributed K-Means algorithm~\citep{Bandopadhyay:2006} 
+		(section~\ref{sec:bigdata:d-kmeans}) over Pregel algorithm (algorithm~\ref{algo:bigdata:pregel}). Define the
+		processing, and the input and output messages for the super-steps.
+	\item Update DBScan algorithm (algorithm~\ref{algo:bigdata:dbscan}) to report ``core points'' and ``border points''
+		of a cluster.
+	\item For MR-DBScan algorithm (section~\ref{sec:bigdata:mrdbscan}), what should be the optimal depth of halo and inner halo 
+		for a subspace?
+	\item In BIRCH algorithm (section~\ref{sec:bigdata:stream}), when two clusters are merged, what will be the parameters for 
+		the CF in the merged cluster?
+\end{enumerate}

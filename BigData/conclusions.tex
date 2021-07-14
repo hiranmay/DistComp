@@ -1,0 +1,27 @@
+\section{Conclusion}
+
+\index{big data system}
+In this chapter, we have presented several techniques to store, access and process large volumes of data in a distributed environment. 
+The three Vs of {\em big data}, namely volume, veracity and velocity pose formidable challenges to processing such data. Besides,
+processing of unstructured and dynamic data calls for techniques, different from those deployed in traditional data processing 
+systems.
+
+We have presented architectures for storage systems, namely RAID, SAN and Cloud, which comprise many independent storage units
+and can scale up to peta-bytes of data. Data redundancy in these systems provide fault-tolerance. We have reviewed the 
+architectures of two different distributed file systems, namely Ceph and HDFS, that provide UNIX-like interface and transparent 
+access over distributed storage. These file-systems ensure high system availability. No-SQL databases are built over these 
+file systems to store and manipulate unstructured data. We have exemplified parallel processing over these databases with
+map-reduce and Pregel algorithms.
+%
+Further on, we have presented a generic architecture, the lambda architecture, which is commonly applied in distributed analytics 
+systems. The architecture enables integration of static data stored in databases and dynamic data that are streamed. We also
+discuss distributed algorithms for two popular clustering techniques, namely k-means and DBScan, and the BIRCH algorithm for
+stream clustering.
+
+In this chapter, we have focused on the distributed computing technology that forms the foundation for distributed data analytics,
+which is indeed a vast subject and there are many books that provide more insights into the techniques for distributed analytics.
+Discussion of those techniques are beyond the scope of this book. Further, this chapter deals primarily with data at their lowest 
+level, and does not try to organize them to abstracted knowledge. We shall deal with such abstraction process and distributed knowledge 
+management in the next chapter.
+
+

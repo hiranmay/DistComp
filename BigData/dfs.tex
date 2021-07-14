@@ -1,0 +1,309 @@
+\section{Distributed File Systems}
+\label{sec:bigdata:dfs}
+
+\index{distributed file system|see {DFS}}
+Distributed file systems (DFS) provide a layer of abstraction over large data stores on cloud. They implement familiar UNIX-like
+file interface over the distributed data stores. A DFS is generally equipped to hold petabytes of data distributed over many inexpensive
+devices. Thousands of users distributed on different nodes can interact concurrently with a distributed file system. 
+
+\index{DFS|textbf}
+\begin{definition}[distributed file system (DFS)]
+	A distributed file system (DFS) is a file system with data stored on multiple servers. The access mechanism is transparent
+	to the physical distribution, i.e. the data is accessed as if the file were stored on the local machine.
+\end{definition}
+%
+The goals of a DFS are broadly as follows:
+
+\begin{enumerate}
+	\item {\em Transparency:} Users should view the file-system as a local file system, though it is actually distributed
+		over many nodes connected over a network. They should be able to access the file system from any network node
+		and get the same view of the directories and the files. They should also get the same performance in file access, 
+		if the files were stored in the local device.
+	\item {\em Fault Tolerance:} In order to achieve complete transparency, a distributed filing system need to be resilient
+		against a server failure or a network failure. Any such failure should be dynamically detected and appropriate
+		corrective actions must be taken before there is a service disruption. There should be safeguard against temporary 
+		access failures of permanent data loss. When there are multiple concurrent users, data integrity and consistency 
+		need to be maintained.
+	\item {\em Scalability:} A distributed file system should be able to dynamically add more nodes and devices to accommodate
+		more data and users without a disruption in service. Moreover, it should be able to retire old nodes and storage 
+		devices and accommodate new technology.
+\end{enumerate}
+
+\index{POSIX}
+\index{high performance computing}
+In order to achieve transparency, distributed file systems present a UNIX-{\it like} stream file interface, governed by POSIX
+standard~\citep{IEEE-POSIX}, to the applications. Performance transparency in DFS requires that large chunks of file data be 
+cached in the local memory of the clients. It may sometimes lead to a tradeoff requirement between data consistency and performance. 
+For example, when multiple users read and write on the same file, POSIX compliance demands that the order of writes should be 
+properly maintained in the file and that the result of all writes prior to a read should be available to the latter. Maintaining 
+such strict coherency requires synchronous operations, i.e. flushing of cache data and reloading by all the clients after every 
+write operation. Obviously, such synchronous operations prove to be a performance bottleneck when there are a large number of 
+clients and multiple copies of large caches are to be written back to and reloaded from devices distributed over a number of servers. 
+Besides, we have seen in chapter~\ref{chap:event-ordering} that it is not always possible to ascertain the sequence of (read/write) 
+events in a distributed system in absence of a common clock. Distributed file systems deviate from POSIX compliance, and 
+and do not guarantee ordering of read/write requests. They usually adopt the POSIX extensions~\citep{Welch:2005} developed
+by the high performance computing (HPC) community.
+
+\index{striping}
+In order to achieve fault tolerance, blocks of file data are replicated (generally 3 instances) and stored on different devices. 
+Optimal performance in a DFS is achieved with uniform data and workload distribution over its storage units and the servers. 
+New data blocks are {\em striped}, i.e. randomly distributed over multiple devices to achieve data balance, and the popular ones 
+among the existing data blocks are periodically migrated (redistributed) over the available servers to alleviate workload imbalance.
+%
+Moreover, the replicas of data and metadata needs to be synchronized through constant interactions within a DFS. Different filing
+systems follow different protocols for the purpose.
+
+The view of a complete file system emerges from its metadata. Metadata design, their replication and their placement over the
+servers is a critical issue in a distributed filing system. While a centralized metadata is needed for a complete view of the
+filing system, it limits the scalability and performance in a DFS. Different distributed filing systems use different strategies 
+for metadata management.
+
+\index{Ceph} \index{HDFS}
+In the following sections, we discuss two popular open source distributed file systems, {\em Ceph}~\citep{Weil:2006} and {\em 
+Hadoop Distributed File System} (HDFS)~\citep{Shvachko:2010}, which use distinct design strategies to achieve the design goals. 
+This will be followed by a comparison of the two systems.
+
+\subsection{Ceph}
+
+\index{Ceph}
+A simplified architecture for Ceph is depicted in figure~\ref{fig:bigdata:ceph}. While a Ceph client implements the application
+interface, the data and metadata management over distributed storage system is delegated to the backend RADOS module.
+%
+A Ceph client implements a POSIX-like application interface. The DFS allows multiple concurrent read and write operation. Thousands 
+of Ceph clients can concurrently interact with it's backend storage system. Large data cache with each client and asynchronous 
+operations, together with efficient data management at the backend,  lead to performance in the system. Ceph clients do not guarantee 
+a read operation to retrieve the results of all preceding writes by others. Further, the asynchronous writes do not guarantee their 
+sequencing, and does not attempt to prevent data inconsistency. Application need to follow some protocols to maintain data coherence 
+in a file. For example, it is a common practice for the concurrent processes in many scientific applications to write in exclusive 
+segments of a file. If needed, synchronous writes and cache consistency can be achieved through explicit locks.
+
+\begin{figure}[htbp!]
+	\centerline{
+		\epsfig{figure=./Bigdata/ceph.eps,width=0.8\linewidth}
+	}
+	\caption{Architecture of Ceph distributed file system} 
+	\label{fig:bigdata:ceph}
+\end{figure}
+
+\index{Reliable Autonomic Distributed Object Store|see {RADOS}}
+\index{RADOS}
+The file data and the metadata are stored into some object storage device (OSD) clusters. The storage function in Ceph is managed by 
+its {\em Reliable Autonomic Distributed Object Store} (RADOS) module.
+Every data-block to be stored is replicated (generally 3 instances), and each
+replica is stored on a different device. The available storage resources and their compositions are represented by a hierarchical 
+{\em cluster map}. The cluster map assumes a tree structure of {\em bucket}s, with the root node representing the entire storage space, 
+the leaf nodes individual devices, and the intermediate node the intermediate hierarchy, like locations, rooms, rows, cabinets, shelves, 
+etc. in an distributed installation. Moreover, the placement of the replicas can be governed by some {\em placement rules}. For example, 
+a placement rule may demand that the replicated blocks to be placed on devices in different chassis that do not share common power-supply, 
+improving fault-tolerance in the system. 
+Recently Ceph has moved over to BlueStore~\citep{Aghayev:2020} for it's backend data management. It bypasses the local file management 
+system of the servers to read/write directly on the storage devices, resulting in significant performance improvement.
+
+\index{CRUSH algorithm}
+RADOS implements a pseudo-random predictable algorithm (CRUSH~\citep{Weil:2006:2}) to distribute replicas of new data in a 
+pseudo-random predictable fashion on the storage. This leads to (a) {\em striping} of the data over the entire available storage space, 
+rather than new data being concentrated on new storage devices leading to workload balance, and (b) avoiding data imbalance with older 
+storage devices are packed with data, while new devices lies empty. Further, the current ``popularity'' of existing data are periodically 
+ascertained and popular data is redistributed over the the storage space to achieve workload balance. A dynamic subtree partitioning 
+algorithm~\citep{Weil:2004} enables computing an optimal distribution policy. Data and workload balancing is a key contributor to 
+performance and scalability in Ceph. 
+
+The replica of data from faulty or retired disks are also distributed over the available storage space. Every data store is actively 
+monitored to detect failures and to take appropriate corrective actions. RADOS distinguishes between devices which are temporarily 
+{\em down} (because of network issues, server overload, etc.) and which are permanently {\em out}, thereby optimizing on {\it en-mass} 
+data replication activities.
+
+A large file system need to deal with a large volume of metadata. In order to alleviate metadata bottleneck, a key innovation in Ceph 
+is decoupling of its data and metadata. They are stored in two distinct clusters in the underlying object store, both controlled by
+RADOS. 
+%
+Unlike in traditional filing system, where the data locations of a file is read from a ``file allocation table'' (FAT) stored
+in the i-nodes, the metadata is not at all used during the read/write operations in Ceph. The pseudo-random allocation algorithm 
+CRUSH enables computation of storage locations of the replicas from the identity of the file-block and the striping policy. 
+These pieces of information are stored in the i-node of a file, and are obtained by a client when it interacts with the metadata 
+store for opening the file. Subsequently, the clients interact directly with the object store to perform read/write operations,
+avoiding metadata bottleneck. Metadata operations that result in change in namespace, such as rename or unlink, are done synchronously.
+ 
+Further, elimination of file allocation tables make the metadata slim and it's management simpler. Since Ceph deals with smaller volume 
+of metadata for a file, most of the metadata operations are handled from the cache itself, though periodic reads from the storage devices
+are necessary. When there are changes in the metadata, it needs to be saved on the storage devices for persistence. Per-device journal 
+files are maintained for the purpose, and disk-writes are optimized by consolidating the journal entries when there are frequent metadata 
+updates.
+
+\subsection{Hadoop Distributed File System}
+\label{sec:bigdata:hdfs}
+
+\index{Hadoop Distributed File System|see {HDFS}}
+\index{HDFS} \index{WORM}
+Like in Ceph, Hadoop Distributed File System (HDFS) also uses asynchronous read and write operations for achieving performance.
+Unlike Ceph, HDFS implements a {\em write-once, read-multiple} (WORM) policy to maintain file consistency. When a {\em lease} for
+write is granted to one HDFS client, no other client can write on the file. However, there is no restriction on other clients to read 
+the file. When some clients read a file while it is being written by another, there is no guarantee that the latest writes are 
+available to the reads. A file, once written and closed, cannot be written over again, though new data can be appended by reopening
+it. This ensures that a read operation never receives an obsolete data.
+
+\index{namenode}
+Rather than dispensing with the use of metadata for file read/write operations, HDFS makes the operation memory based.
+The entire file-system metadata in an HDFS cluster storage is stored in the {\em namenode}, which is persistently stored
+in the local file system of a host and is loaded in the memory, enabling fast access, when the system cold-starts. 
+
+\index{datanode}
+In HDFS, {\em datanode}s keep track of physical placements of file blocks. A file block is replicated on multiple datanodes.  
+The namenode maintains the namespace, as well as mapping of file blocks to the datanodes. For read operations, an HDFS client 
+consults the namenode to get a list of he file datanodes, and then proceeds to read. For write operations, if a new block is
+to be added (for the first write or when the previous block is full), a client requests the namenode to allocate a set of 
+datanodes for each replica for the block. Once the datanodes are received, it writes the blocks in 
+a pipelined manner as shown in figure~\ref{fig:bigdata:hdfs}. The writes are asynchronous, and the order in the pipeline is
+such that the network communication overheads are minimized. The datanodes confirm storage of the data to the namenode,
+once the data is actually written into. Like Ceph, HDFS also provides a configurable block placement policy interface which 
+can be tuned for application requirements. The default policy provides a tradeoff between minimizing the write cost, and 
+maximizing data reliability, availability and aggregate read bandwidth. It is ensured that all replicas of a block are never 
+located on a single rack to improve fault-tolerance.
+
+\begin{figure}[htbp!]
+	\centerline{
+%		\scalebox{0.8}{\input{./Bigdata/hdfs.pgf}}
+ 		\epsfig{figure=./Bigdata/hdfs.eps,width=0.8\linewidth}
+	}
+	\caption{Information flow for write operation in HDFS} 
+	\label{fig:bigdata:hdfs}
+\end{figure}
+
+
+An image of the namenode is periodically saved into the persistent storage of the local file system of the server, and is replicated
+on other servers for fault-tolerance. While the persistent image of the namenode contains the information about the file-blocks, it 
+does not contain the information about file-block to datanode mappings to make it lean. Further, the association between the file-blocks 
+and datanodes is dynamic, because of data migrations to cope up with device failures and load imbalances. Saving such dynamic information
+would need more frequent checkpointing of the namenode.
+%
+Each replica of a block is represented in a datanode with two files. One of the files contains the data itself. The other contains 
+some metadata, including the identity of the file-block that is being stored. When the system goes through a cold-start, the datanodes 
+perform a {\em handshake} with the namenode, thereby establishing the file block to datanode mapping. The metadata also store block
+checksums, which is periodically checked (and also during read) to ensure data integrity.
+
+In order to confirm their availability, every datanode sends its {\em heartbeats} to the namenode periodically. If the namenode does 
+not receive a heartbeat from a datanode within a stipulated period of time, it assumes the latter to be out of service, and creates 
+new replicas for the lost blocks on other datanodes. The heartbeat carries some more information like it's storage capacity, storage 
+in use, data transfers in progress, etc. that is used by the namenode to decide on space allocation and load balancing.
+
+Load balancing in HDFS involves comparing the utilization of each datanode with respect to the global average. If the difference for
+a datanode exceeds a threshold, load balancing is achieved by iteratively moving replicas from datanodes with higher utilization to 
+those with lower utilization. During this process, it is ensured that number of racks over which the replicas are distributed is not
+reduced and the fault-tolerance is not compromised. Further, inter-rack copying is minimized to optimize the migration performance.
+
+\subsection{Comparing Ceph and HDFS}
+
+\index{Ceph} \index{HDFS} \index{CRUSH algorithm}
+A broad comparison of Ceph and HDFS is presented in table~\ref{tab:bigdata:dfs-comparison}. A basic difference between the two 
+systems is that the architecture of Ceph is distributed, while that for HDFS is centralized. The metadata for Ceph is placed
+in the object store (like file data) and file data location is ascertained through computation (CRUSH). In HDFS, the metadata 
+is stored on the namenode server and is consulted for file data access. Though the HDFS works with memory-resident metadata,
+and performs multi-threaded operations,
+the limitations of server memory and computing power puts a ceiling to its performance. While HDFS is appropriate for a small
+number of large files, metadata management becomes problematic for large number of files and complex directory structures.
+Ceph does not have such restrictions, and can scale up for large number of big files.
+
+\begin{table}[htbp!]
+	\caption{Comparison between Ceph and HDFS \label{tab:bigdata:dfs-comparison}} {
+
+%	\begin{center}
+		\begin{tabular}{p{30mm} || p{40mm} |  p{40mm} }
+		\hline
+			& {\bf Ceph} & {\bf HDFS} \\
+
+		\hline
+		\hline
+			Architecture & Distributed & Centralized \\
+		\hline
+			Data access & Computation (CRUSH) & Lookup \\
+		\hline
+			Fault detection & Periodic monitoring & Periodic monitoring \\
+		\hline
+			System availability & High & No fail-over \\
+		\hline
+			Data availability & Replication & Replication \\
+		\hline
+			Placement strategy & Policy driven & Policy driven \\
+		\hline
+			Cache consistency & Lock & WORM, lease for write \\
+		\hline
+			Load balancing & Auto & Auto \\
+		\hline
+		\end{tabular}
+	}{}
+%	\end{center}
+%	\caption{Comparison between Ceph and HDFS}
+%	\label{tab:bigdata:dfs-comparison}
+\end{table}
+
+Both Ceph and HDFS have strong fault-tolerance features. The data replicas are distributed on multiple racks or cabinets in a 
+policy-driven fashion. Faults are detected early in both the systems with fully connected servers, communicating with little 
+overheads to confirm their availability. As soon as a failure is detected, the server is decommissioned from active responsibilities
+and read/write operations are supported with the replicas. At the same time, creation of new replicas on the server is also initiated. 
+Both of the file systems are also good at load balancing, by distributing new data over the entire storage space and periodically 
+migrating ``hot'' data to servers that are under-loaded.
+
+Ceph, being a distributed system has high availability. Metadata are replicated and their management is distributed across several 
+servers. Thus, the failure of any server does not affect the system operations. On the contrary, HDFS has a centralized architecture
+with dependence on the server hosting the namenode. The system goes down if the namenode server fails. HDFS replicates the metadata
+and the namespace in one or more backup namenodes, so that the system can restart with an alternate namenode server in a healthy state.
+During this reboot operation, the system remains unavailable.
+
+\index{POSIX}
+Neither of Ceph and HDFS comply fully with the POSIX file system standard. Besides the
+data coherence issues discussed earlier, the functionality that is often poorly supported is file locking, atomic renaming of files and 
+directories, multiple hard-links, and deletion of open files. Sometimes, deviations from the POSIX standard are subtle. For example, 
+HDFS may not return the ``real'' file-size of till some time after the file has been written because of asynchronous writes. Thus,
+a DFS needs to be carefully evaluated for any practical application.
+
+The native file systems of the servers that constitute the underlying cloud storage of a DFS generally supports stream files,
+and the actual read/write operations of file-block replicas on a storage device is executed through them. It has been reported
+that every write in an DFS is amplified 13 times before it is finally written into the storage device. While a transaction
+support could simplify the matter, a DFS need to resort to some inefficient or complex mechanisms. Ceph's BlueStore~\citep{Aghayev:2020} 
+bypasses the native file system and write directly on the storage device, taking over the complete device space management.
+
+\section{Distributed Index}
+
+\index{indexing}
+\index{peer-to-peer systems|see {P2P systems}}
+\index{P2P systems}
+Data that is stored somewhere in a distributed system needs to be discovered and retrieved in order to process them. This is
+generally achieved with a process called {\em indexing}, that creates pointers to individual data elements from a table available
+at a known location. One of the three distinct strategies is used in a distributed system to implement search and retrieval:
+
+\begin{enumerate}
+        \item {\em Local index}: Each node in a distributed system creates an index for the data it holds. The index is not shared
+                with any other node. When a node receives a search request, it satisfies the request it from its local data. Further,
+                the request is forwarded to the neighboring nodes recursively. In order to avoid network overload, a request is
+                generally associated with a TTL (time to live) parameter.
+		\index{Gnutella}
+                Gnutella
+		% ~\footnote{See \url{http://gtk-gnutella.sourceforge.net/en/?page=docs}.} 
+		is one of the early peer-to-peer
+                file sharing systems based on this architecture. There have been many attempts to improve it's scalability, but
+                too many message exchanges and large latency remain the core bottleneck.
+        \item {\em Centralized index}: All data in a distributed system is indexed at a central location. The index is generally
+                stored in a large and distributed file system. The indexing process can either be centralized or decentralized.
+                In the latter case, the index table is generally accessible to all indexing processes through some common memory
+                or storage. Besides, appropriate protocols need to be followed to maintain coherence of the index table. All
+                search requests are directed to the central server, which can prove to be a bottleneck. 
+		\index{Napster}
+		Napster
+		~\footnote{See \url{https://us.napster.com/}.} 
+		represents an early peer-to-peer file sharing system with this architecture.
+        \item {\em Distributed index}: The index is partitioned based on certain policies, either according to terms or according to 
+		documents, and distributed across servers. The first step in query processing is to identify the server that may contain 
+		the relevant part(s) of the index table.  The index table is then consulted to locate the required data item(s). Large 
+		search engines like Google, which indexes billions of documents, use this index structure.
+\end{enumerate}
+
+\index{distributed system|textbf}
+\begin{definition}[distributed index]
+	A distributed index is an index structure that is partitioned across several machines, based on certain policies.
+\end{definition}
+
+\index{Freenet}
+An open source implementation for this architecture is Freenet~\citep{Clarke:2002}, the development of which had been motivated by 
+freedom of expression on the Internet. The data blocks and the index pages are replicated on multiple servers for fault tolerance, 
+and can be accessed only through secure hashing to preserve their anonymity.
+

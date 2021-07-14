@@ -1,0 +1,85 @@
+\section{Distributed Storage Systems}
+\label{sec:bigdata:storage}
+
+While there has been a tremendous development in storage technology, it has not caught up with the data generation rate in the modern
+times. Though it may, in principle, be possible to develop a huge data store that can store all data needed by an application, such a 
+storage will be extremely expensive. Further, the access path for the storage medium may prove to be a bottleneck when the data velocity 
+(production or consumption rate) is high. This has motivated development of distributed storage systems. We provide a brief introduction 
+to distributed storage system architecture in this section. 
+
+\begin{definition} [distributed storage system]
+	A {\em distributed storage system} is a storage infrastructure that can split and store data across multiple physical storage 
+	elements, often distributed across multiple locations. The access mechanism is transparent to the physical distribution, i.e.
+	the data is accessed in a way as if it were stored on a local disk.
+\end{definition}
+
+\subsection{RAID}
+
+\index{redundant array of inexpensive disks|see {RAID}}
+\index{RAID|textbf}
+In the days when networking was not so common, {\em Redundant Array of Inexpensive Disks} (RAID)~\citep{Patterson:1988} has been proposed 
+as a solution for storing large volumes of data, where the data was striped and replicated over a number of disk-arrays. Striping (writing
+different blocks on different disks) provides for improvement in access speed, and replication provided for fault-tolerance. Further, a
+parity for every block is stored in yet another disk (excluding those where the block is replicated) for confirming data validity during
+read. The organization of RAID is shown in figure~\ref{fig:bigdata:raid}. The controller that controls read and write operations 
+to the disk array proves to be the bottleneck in this architecture. In modern times, RAID architecture is implemented in USB and other 
+personal storage devices.
+
+\begin{figure}[htbp!]
+	\centerline{
+		\epsfig{figure=./Bigdata/raid.eps,width=0.6\linewidth}
+	}
+	\caption{RAID architecture}
+	\label{fig:bigdata:raid}
+\end{figure}
+
+
+\subsection{Storage Area Networks}
+
+\begin{figure}[htbp!]
+	\centerline{
+		\epsfig{figure=./Bigdata/san.eps,width=0.8\linewidth}
+	}
+	\caption{SAN architecture}
+	\label{fig:bigdata:san}
+\end{figure}
+
+\index{storage area network|see {SAN}}
+\index{SAN|textbf}
+With networking becoming commonplace, {\em Storage Area Networks} (SAN) has been proposed as a storage solutions 
+(see figure~\ref{fig:bigdata:san}). In SAN, independent
+storage units (each of which can be a RAID) are connected with the servers over a high throughput local area network, e.g. a fiber 
+network or InfiniBand~\citep{Shanley:2003}, in a data-center environment. The network provides block level access to the data storage.
+Duplex switches used in the network for reliability, and they are generally used in load-sharing mode. The distribution of storage
+improves scalability and access speed in a SAN. The redundancy in access path improves it's availability. While the local data for a 
+server may be stored in a storage directly connected to the server for faster access, shared data is stored in SAN. Note that the 
+storage network is not accessible to the client machines.
+ 
+\subsection{Cloud Storage}
+
+With the advent of broadband wide area networks and cloud computing architecture, provision of on-demand large volume storage
+became possible. Such storage system accessible on a cloud computing platform is known as {\em Cloud Storage} system. There
+are a few vendors, namely Google, Amazon, IBM and Microsoft, who provide large-scale global public cloud computing and storage 
+services. Many government agencies and large corporations have also created their private cloud environments. 
+
+At the lowest level, the storage servers provide access to unstructured data, where a user can create a {\em bucket} (or, 
+a {\em blob}) in an account and create ``objects'' in them. These storage servers are known by different names such as 
+{\em object storage devices} or {\em object storage servers}. Different storage systems support different sizes for the buckets 
+(ranging between 2GB and 1TB) and different levels of organizational hierarchy. The objects are treated as unstructured data 
+by the storage system, and the onus of interpreting their contents is on the user. An object can generally be accessed using
+a key, a principle that will be elaborated in section~\ref{sec:bigdata:key-value}. The operations supported are Create, Read, 
+Update (or, Write), and Delete (abbreviated as CRUD) and the interactions are via HTTP commands. Version control and access 
+control mechanisms at various levels are supported in these systems. An important aspect of the cloud storage systems is that 
+they are essentially composed of many thousands of devices. They are built incrementally. Old devices are routinely retired and 
+new devices are commissioned. Occasional device failures are also a reality. Large volumes of data are created, updated, and 
+deleted by its users over short periods of time. A cloud storage needs to provide uninterrupted and consistent view of the data 
+to it's users with effective data distribution and data replication strategies. Yet another requirement for the cloud storage
+systems is to support emerging storage devices like shingled magnetic recording (SMR) and solid-state drives. There drives
+offer many advantages like higher data packing density and alleviates garbage collection issues, but often have backward-incompatible 
+interfaces.
+
+It is apparent that such block-level storages is not convenient for the end users, who may like to have a high-level stream
+or structured view of the data. Consequently, higher level interfaces have been developed over the big data unstructured object 
+stores. We shall compare a few distributed filing systems in section~\ref{sec:bigdata:dfs}, and databases for big data applications
+in section~\ref{sec:bigdata:nosql}.
+

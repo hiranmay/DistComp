@@ -1,0 +1,612 @@
+\section{Distributed Data Analytics}
+\label{sec:bigdata:analytics}
+
+\index{distributed data mining}
+The value of big data, which is often collected from and stored in a distributed system, comes from it's analysis and the insights
+learned from them. Big data analytics have been employed in various domains, such as business intelligence~\citep{LiuX:2014}, disaster
+management~\citep{Wang:2016} and transport systems~\citep{Ghofrani:2018}, to name a few. The goals of such analysis, in order of increasing
+value as well as increasing complexity of algorithms, can be broadly stated as 
+
+\begin{itemize}
+	\item {\em Descriptive}: which tries to answer ``what happened'',
+	\item {\em Diagnostics}: which goes a step further and explores ``why it happened'',
+	\item {\em Predictive}: which looks into the future and predicts ``what is going to happen'', and
+	\item {\em Prescriptive}: which does what-if analysis and recommends ``what to do to influence the future to our favor''.
+\end{itemize}
+
+\index{dynamic data mining} \index{stream data mining}
+\index{lambda architecture}
+There are several challenges to data analytics in distributed systems. The most common situation is when data is gathered from 
+multiple sources on a centralized cloud database, which is common to many business analytic systems. In such cases, the large 
+volume of data stored on distributed databases poses some unique challenges. Beyond such offline analytics, there are applications 
+that deal with highly dynamic data (e.g. stock markets), the ``speed'', i.e. near real-time response, i.e. how soon an input dataset 
+can be interpreted assumes significance. An architecture, commonly known as the {\em Lambda architecture}, which combines batch
+and stream processing methods, has been widely used to meet this challenge.  Figure~\ref{fig:bigdata:lambda} depicts a simplified 
+view of he architecture. In consists of a {\em batch layer}, a {\em stream layer} and a {\em service layer}. The batch layer 
+receives data from offline processes as well as the stream layer. It stores the data (or, some summary of it) and creates batch
+views. It keeps on repeating the process over and over again. The processing in this layer is generally slow, and 
+the batch views are obsolete as soon as they are generated. The batch views are complemented by a real-time view created by the
+stream layer that processes small volumes of most recent stream data. The service layer combines the two views to produce the 
+output.
+
+\begin{figure}[htbp!]
+	\centerline{
+		\epsfig{figure=./Bigdata/lambda.eps,width=0.8\linewidth}
+	}
+	\caption{Lambda architecture}
+	\label{fig:bigdata:lambda}
+\end{figure}
+
+\index{fog processing}
+IoT based control systems, such as one monitoring and controlling an atomic power station, have more stringent real-time requirement 
+on analytics, for a delay beyond a certain limit may result in a catastrophe. In most of the IoT based systems, all generated data are 
+not delivered into a central store. In such cases, analysis of data is done on the nodes near the sensors, i.e. at the level of fog 
+computing. Such data is generally volatile, i.e. they are not stored anywhere, streamed into analytic systems, and then discarded. 
+A summary of such volatile data is often preserved for posterity.
+
+\index{clustering}
+Unsupervised machine learning techniques are generally employed to mine the large volume of data in a distributed system to discover
+useful information hidden into them. Many tools have been developed on distributed file system platforms to support various required
+capabilities,
+% ~\footnote{See Hadoop homepage \url{https://hadoop.apache.org/} for the Apache open source tools available on HDFS.}, 
+a detailed discussion of which is beyond the scope of this book. Data clustering, or grouping the data into manageable and meaningful
+categories, is generally the initial step in any data mining applications. In the following section, we present a few methods for 
+clustering distributed and stream data. 
+
+
+\subsection{Distributed Data Clustering}
+
+\index{clustering!distributed algorithms}
+Grouping the data into meaningful and manageable number of categories is often the first step in recognizing patterns in large 
+volumes of data. 
+For example, an analytic system for online shopping portal may like to group the users into a few categories depending on their
+frequency and value of online purchase. In such cases, an analytic system may not have any \`{a}-priori information about the
+buying pattern and cannot decide the boundaries of the groups that will provide a meaningful categorization. Unsupervised machine
+learning techniques come into play, and clustering algorithms are used to group the data into meaningful categories. In this 
+section, we introduce the problem of clustering, two widely-used clustering algorithms with their implementations on 
+distributed computing platforms, followed by stream clustering.
+
+\subsubsection*{Clustering}
+
+\index{clustering|textbf}
+\begin{definition} [cluster]
+	% \label{def:bigdata:cluster}
+	{\em Clustering} is the process of organizing objects into groups whose members are considered similar with respect to some 
+	specific parameters, without the bounds of the group being predefined. For example, people in a group may be clustered into 
+	two groups ``tall'' and ``short'' based on the similarity of their heights.
+\end{definition}
+
+\begin{figure}[htbp!]
+	\centerline{
+		\epsfig{figure=./Bigdata/cluster.eps,width=0.8\linewidth}
+	}
+	\caption{Data Clustering}
+	\label{fig:bigdata:cluster}
+\end{figure}
+
+\noindent
+Figure~\ref{fig:bigdata:cluster} shows a set of data-points clustered into three clusters.
+The first and foremost criterion for clustering is that it should be possible to compare the data objectively, and compute
+a numeric distance between two data points. In other words, it should be possible to map the data into a {\em metric space}.
+
+\index{metric space|textbf}
+\begin{definition} [metric space]
+	% \label{def:bigdata:metric-space}
+	A {\em metric space} $\mathcal{M}$ is defined as $\mathcal{M} = (\mathcal{D}, dist)$, where $\mathcal{D}$ represents a data domain
+	and the distance function is represented as $dist: \mathcal{D} \times \mathcal{D} \rightarrow \mathcal{R}$.
+
+	\noindent
+	Moreover $d$ should satisfy following properties:
+	\begin{flalign}
+		\text{\bf non-negativity}: 		& \hspace{1cm} \forall x,y \in \mathcal{D}, dist(x,y) \geq 0\\
+		\text{\bf reflexivity}:			& \hspace{1cm} \forall x \in \mathcal{D}, dist(x,x) = 0 \\
+		\text{\bf positiveness}:		& \hspace{1cm} \forall x,y \in \mathcal{D} \text{ and } x \neq y, dist(x,y) > 0 \\
+		\text{\bf symmetry}:			& \hspace{1cm} \forall x,y \in \mathcal{D}, d(x,y) = dist(y,x) \\
+		\text{\bf triangle of inequality}: 	& \hspace{1cm} \forall x,y,z \in \mathcal{D}, dist(x,y) + dist(y,z) \geq dist(x,z)
+	\end{flalign}
+\end{definition}
+
+\noindent
+\index{Manhattan distance}
+\index{Euclidean distance}
+In general, the data can be a $d$ dimensional vector, and the distance between two data items can be measured in many different ways. 
+Some of the common distance measures are {\em Euclidean distance} given by 
+$dist(x,y) = ((x_1 - y_1)^2 + (x_2 - y_2)^2 + \dots (x_d -y_d)^2)^{\frac{1}{2}}$, 
+or {\em Manhattan distance} given by $dist(x,y) = \mid x_1 - y_1 \mid + \mid x_2 - y_2 \mid + \dots \mid x_d - y_d \mid$, 
+where $(x_1, x_2, .. x_d)$ and $(y_1, y_2, .. y_d)$ represent the components of vectors $x$ and $y$ respectively.
+
+\subsubsection*{K-Means Clustering Algorithm}
+
+\index{clustering}
+\index{K-Means clustering|textbf}
+\index{clustering algorithm!centroid based}
+\begin{definition} [K-Means clustering]
+	% \label{def:bigdata:kmeans}
+	Let us assume that we have set of data-items of cardinality $n$ represented by $X = \{x_i \mid i = 1 .. n$\}, in a metric space 
+	as defined above. {\em K-Means clustering} refers to partitioning the data into $k$ partitions, where $k$ is a predefined number, 
+	such that the objective function 
+
+	\centerline{
+		$J = \sum_{j=1}^k \sum_{i=1}^{n_j} dist(x_i^{(j)}, c_j)^2$
+	}
+
+	\noindent
+	is minimized. 
+	In the above expression, $x_i^{(j)}$ represents a data item placed in $j$-th cluster, $n_j$ is the number of data items in 
+	cluster $j$.  and $c_j$ represents the center of the $j$-th cluster, i.e. $c_j = \frac{1}{n_j} \sum_i x_i^{(j)}$. 
+\end{definition}
+
+
+\begin{algorithm}[!htbp]
+	\SetAlgoLined
+	\SetKwProg{proc}{procedure}{}{end}
+	\DontPrintSemicolon
+	\proc{K\_Means($X$)}{
+		Select $k$ cluster centers $c_j \mid j = 1 .. k$ at random \;
+		Distribute data-items $x_i \mid i=1..n$ to the clusters at random \;
+		\Repeat{stopping criterion met} {
+			$\vartriangleright$ Minimize inter-cluster entropy\;
+			\For{$i=1..n$}{
+				Place $x_i$ in cluster $j$, such that $\forall l \neq j, dist(x_i, c_j) \leq dist(x_i, c_l)$ \;
+			} % EndFor
+			$\vartriangleright$ Minimize intra-cluster entropy \;
+			\For{$j = 1..k$}{
+				Recompute cluster-centers as $c_j = \frac{1}{n_j} \sum_i x_1^{(j)}$ \;
+			} % EndFor
+		} % EndRepeat
+	} % EndProc
+	\caption{K-Means clustering algorithm}
+	\label{algo:bigdata:kmeans}
+\end{algorithm}
+
+K-Means clustering can be achieved by recursively minimizing the inter-cluster and intra-cluster entropies, as shown in 
+algorithm~\ref{algo:bigdata:kmeans}. 
+Note that redistribution of the data-points into different clusters (the first {\bf for} loop) minimizes the objective function $J$, 
+assuming $c_j$'s to be constant. Re-computation of the cluster centers (the second {\bf for} loop) minimizes $J$ assuming that the
+data distribution remains unchanged. 
+The stopping criterion can be defined in many ways, such as data-points do not move across clusters during redistribution, the
+recomputed means do not change, etc. 
+%
+In general, the algorithm may take several iterations to converge. In order to avoid too many iterations, a maximum limit on number of 
+iterations is often imposed.  If the data is not well-behaved (e.g. uniformly distributed over a range in the data space, and no ``real'' 
+clusters exist), the algorithm may not converge. In such cases, starting with different seed (initial) values of the cluster centers may 
+yield different results. We shall not get into those issues in this book and shall assume that the data is well-behaved.
+%
+The complexity of the algorithm can be shown to be $O(k.n.d)$, implying that the algorithm is not scalable for big data with large
+dimensionality. Further, the communication overheads for data comparisons makes it unsuitable for distributed data. 
+We shall discuss a distributed algorithm for K-Means clustering that alleviates the scalability problem.
+
+\subsubsection*{Distributed K-Means Clustering}
+\label{sec:bigdata:d-kmeans}
+
+\index{distributed clustering algorithm!centroid based}
+\index{master slave architecture!for distributed K-means clustering}
+The iterative distance computations in K-Means clustering algorithm demand that the entire data be memory-resident, if a reasonable
+performance is to be delivered. In a big data scenario, assume that there are a trillion ($10^{12}$) data points, each with dimension 
+$100$, each represented by a floating point number ($8$ bytes). This amounts to $800$ TB of data, which is beyond the realm of 
+memory of a modern computer.
+%
+Distributed K-Means algorithm solves the problem by partitioning the data and distributing the partitions to independent slave computers
+for processing. The process is coordinated by a master computer, which interacts with the slaves with message communications.
+A general framework for such distributed clustering~\citep{Forman:2000} is given in algorithm~\ref{algo:bigdata:distributed-clustering},
+which can be used for K-Means, as well as a few other clustering algorithms that follow a centroid model. The stopping criterion can 
+be when the local cluster centers do not (significantly) differ from their global averages.
+
+\begin{algorithm}[!htbp]
+	\DontPrintSemicolon
+	\SetAlgoLined
+	\SetKwProg{proc}{procedure}{}{end}
+	\proc{Distributed Clustering}{
+		Master computer partitions the data-points randomly into $p$ partitions and assign each to a slave computer \; 
+		Master computer selects $k$ cluster centers (centrally) and communicate to the slave computers \;
+		\Repeat{stopping criterion met} {
+			Each slave computer assigns its data-points to the nearest cluster centers and
+				recomputes the cluster centers. It communicates the cluster centers and number of data points with
+				each cluster back to the master\;
+			The master computes the weighted mean of the cluster-centers communicated by the slaves and communicates 
+				them to the slaves\;
+			The slave computers update the cluster-centers\;
+		} % EndRepeat
+		Each slave computer returns the cluster centers and the data points associated with each to the master computer, 
+		which merges them to produce the final result\;
+	} % EndProc
+	\caption{Framework of distributed clustering algorithm}
+	\label{algo:bigdata:distributed-clustering}
+\end{algorithm}
+
+\noindent
+This framework proves to be a natural way for distributed computation, when data originates on different nodes of a distributed
+system. For example, when clustering the mouse-clicks on a web-page, which is made globally accessible with multiple geographically 
+distributed servers, the data can be partitioned on the basis of their geographical origin and (captured and) served by the
+local servers. It can be proved that the distributed algorithm is {\em exact}, i.e. it produces the same results as if it were 
+computed on a single computer. With K-Means algorithm, with even distribution of data on $p$ slave machines, the computational complexity 
+for each of the slave computers becomes $O\left(\frac{k.n.d}{p}\right)$. The communication overhead is $O(k.d)$, which does not increase 
+with $n$. The computational complexity and the communication overheads at the master are both $O(p.k.d)$, and does not depend on $n$. The
+linear increase with $p$ is not a matter of concern with a moderate number of slave computers.
+
+\index{peer-to-peer architecture!for distributed K-means clustering}
+This master-slave architecture has been adapted to peer-to-peer architecture in~\citep{Bandopadhyay:2006}. In this architecture, it is
+assumed that each partner node is directly connected to a subset of nodes in the distributed system. All partner nodes start with same 
+$k$ centroids, and iteratively updates the centroids as in a K-Means algorithm. After every iteration, a partner node polls it's 
+neighbors to check whether the centroids in those nodes have changed and if so, what are the centroids and what are the number of
+data points associated with them. A node updates it's centroids based on the weighted average of cluster information available with 
+itself and those received from the neighbors (rather than the global average computed by the master node). The iterations proceed 
+till the centroids in all nodes stabilize. This approach takes more time to stabilize than the master-slave approach, but has much
+lower communication overhead, especially when the slave computers may be connected to the master with multiple hops.
+
+\subsubsection*{DBScan Clustering Algorithm}
+
+\index{clustering}
+\index{DBScan clustering algorithm|textbf}
+\index{clustering algorithm!density based}
+While K-Means is a centroid based clustering algorithm, DBScan~\citep{Ester:1996} is a density based algorithm, where nearby data-points 
+are progressively joined, provided they exceed a critical density, to form the clusters. The algorithm works with two parameters:
+(a) a (small) distance $\epsilon$ that defines a neighborhood, and 
+(b) a number $\mu$ that defines the critical density. 
+%
+DBScan algorithm is based on the following definitions or neighborhood and reachability. 
+
+\begin{definition} [$\epsilon$-neighborhood]
+	{\em $\epsilon$-neighborhood} of a point $p$, is defined as
+	$\eta_{\epsilon}(p) = \{q \in \mathcal{D} \mid dist(p,q) \leq \epsilon\}$.
+	Note: The $\epsilon$-neighborhood of a point includes the point itself, i.e. $p \in \eta_{\epsilon}(p)$.
+\end{definition}
+
+\begin{definition} [directly density-reachable]
+	A point $q$ is {\em directly density-reachable} from a point $p$ with respect to $(\epsilon, \mu)$ iff
+		(a) $q \in \eta_{\epsilon}(p)$, and
+		(b) $\mid \eta_{\epsilon}(p) \mid > \mu$.
+\end{definition}
+
+\noindent
+Note that the definition of $\epsilon$-neighborhood is symmetric, i.e. $q \in \eta_{\epsilon}(p)$ implies $p \in \eta_{\epsilon}(q)$ 
+and vice-versa.
+However, the notion of directly-density reachability can however be asymmetric. This is illustrated in 
+figure~\ref{fig:bigdata:direct-density}, which depicts a data distribution, with $p$ and $q$ as two data points. The dotted circles 
+depict the $\epsilon$-neighborhood of the points. The point $p$ is in $\epsilon$-neighborhood of $q$, and vice-versa. However, with 
+$\mu = 6$, $q$ is directly density-reachable from $p$, but $p$ is not directly density reachable from $q$.
+%
+\index{core points} \index{border points}
+The direct reachability has the following implication. Generally, data-points are more densely packed near the cluster centers and
+sparse at the periphery. The former set of points are called the {\em core points} and the latter the {\em border points}. In the
+above example, $p$ is a core point in a cluster and $q$ is a border point in the same cluster. DBScan algorithm attempts to form the 
+clusters starting from the centers and moving towards the periphery.
+
+\begin{figure}[htbp!]
+	\centerline{
+%		\scalebox{0.6}{\input{./Bigdata/density.pgf}} % Too much runtime overhead for latex
+		\epsfig{figure=./Bigdata/density.eps,width=0.6\linewidth}
+	}
+	\caption{Asymmetry of direct density reachability}
+	\label{fig:bigdata:direct-density}
+\end{figure}
+
+\begin{definition} [density-reachable]
+	A point $q$ is {\em density-reachable} from a point $p$ with respect to $(\epsilon,\mu)$, if $\exists$ a chain of points 
+	$q_1, q_2, \dots q_i \dots q_n$, such that $q_1 = p$, $q_n = q$, and $\forall i = 1, \dots, (n-1)$, $q_{i+1}$ is directly 
+	density-reachable from $q_i$.
+\end{definition}
+
+\begin{definition} [density-connected]
+	A point $p$ is {\em density-connected} to a point $q$ with respect to $(\epsilon,\mu)$, if $\exists$ a point $o$, such that 
+	both, $p$ and $q$ are density-reachable from $o$ with respect to $(\epsilon,\mu)$. 
+\end{definition}
+	
+\noindent
+Density-connectivity is a symmetric relation, while density reachability is not. For density reachable points, the relation of 
+density-connectivity is also reflexive. 
+%
+\index{cluster}
+Intuitively, a cluster can be defined as a set of maximal density-connected points. The data points that do not belong to any clusters
+are called the ``outliers''.
+
+\begin{definition} [cluster]
+	Let $\mathcal{D}$ be a set of data-points. A {\em cluster} $\mathcal{C}$ with respect to $(\epsilon,\mu)$ is a non-empty subset 
+	of $\mathcal{D}$ satisfying the following conditions:
+	\begin{enumerate}
+		\item {\em Maximality}: $\forall p, q$, if $p \in \mathcal{C}$ and $q$ is density-reachable from $p$ with respect to
+			$(\epsilon,\mu)$, then $q \in \mathcal{C}$. 
+		\item {\em Connectivity}: $\forall p, q  \in \mathcal{C}$, $p$ is density-connected to $q$ with respect to $(\epsilon,\mu)$.
+	\end{enumerate}
+\end{definition}
+
+\index{outlier|textbf}
+\begin{definition} [outlier]
+	Let $\{ \mathcal{C}_i \mid i = 1 .. k \}$ be the clusters in the dataset $\mathcal{D}$ with respect to $(\epsilon,\mu)$, 
+	The {\em outliers} in the dataset $\mathcal{D}$ are defined as those not belonging to any cluster $\mathcal{C}_i$. 
+	% i.e. a datapoint $o$ is an outlier if $\nexists \mathcal{C}_i | o \in {C}_i$. Alternatively, 
+	Thus, the set of outliers $\mathcal{O}$ can be defined as $\mathcal{O} = \mathcal{D} \setminus \cup_{i=1}^k \mathcal{C}_i$.
+\end{definition}
+
+\begin{algorithm}[!htbp]
+	\DontPrintSemicolon
+	\SetAlgoLined
+	\SetKwProg{proc}{procedure}{}{end}
+	\proc{DBScan($\mathcal{D}, \epsilon, \mu$)}{
+		$\vartriangleright$ Initially, cluster-id (ClId) of all points in $\mathcal{D}$ are \texttt{unclassified}\;
+		$c = 1$ $\vartriangleright$ Start with cluster id 1\;
+		\For{each point $p \in \mathcal{D}$ }{
+			\If { $p$.ClId = \texttt{unclassified}} {
+				\If{ExpandCluster($\mathcal{D}, p, c, \epsilon, \mu$) = \texttt{true}}{
+					$c \leftarrow c + 1$\;
+				} % EndIf
+			} % EndIf
+		} %EndFor
+	} % EndProc
+\caption{DBScan clustering algorithm}
+\label{algo:bigdata:dbscan}
+\end{algorithm}
+
+\begin{algorithm}[!htbp]
+	\DontPrintSemicolon
+ 	\SetAlgoLined
+ 	\SetKwProg{proc}{procedure}{}{end}
+	\proc{ExpandCluster($\mathcal{D}, p, c, \epsilon,\mu$)} {
+		seeds $\leftarrow$ $\eta_{\epsilon}(p)$\;
+		\eIf{ $\mid$ seeds $\mid$ $<$ $\mu$}{
+			$\vartriangleright$ $p$ is not a core point in any cluster\;
+			$p$.ClId $\leftarrow$ \texttt{outlier}
+				$\vartriangleright$ The cluster-id of $p$ can change later, 
+				if it is density reached from some other point\;
+			\Return \texttt{false}\; 
+		}{
+			$\vartriangleright$ all points in seeds are direct density-reachable from $p$\;
+			assign $c$ to cluster-id of all data-points in seed\;
+			remove $p$ from seeds\;
+ 			\While{seeds $\neq \emptyset$ } {
+				$q \leftarrow$ take out first item in seeds\; 
+				new-seeds $\leftarrow$ $\eta_{\epsilon}(q)$\;
+ 				\If{$\mid$ new-seeds $\mid$ $\geq$ $\mu$}{
+ 					$\vartriangleright$ $q$ is a core point in the cluster\;
+ 					\While{ new-seeds $\neq \emptyset$ }{
+ 						$r \leftarrow$ take out first item in new-seeds 
+ 							$\vartriangleright$ $r$ is density-reachable from $p$\;
+ 						$\vartriangleright$ if $r$ is already allocated to a cluster, do not touch it\;
+ 						\If{$r$.ClId = \texttt{unclassified} or \texttt{outlier}}{
+ 							\If{$r$.ClId = \texttt{unclassified}} {
+ 								add $r$ to seeds 
+ 								$\vartriangleright$ cluster can further expand from this point\;
+ 							} % EndIf
+ 							$r$.ClId $\leftarrow$ $c$\;
+ 						} %EndIf
+ 					} %EndWhile
+ 				} % EndIf
+ 			} % EndWhile
+ 			\Return \texttt{true}\;
+		} %EndIf
+	} % EndProc
+\caption{Expand cluster routine}
+\label{algo:bigdata:expand}
+\end{algorithm}
+
+\noindent
+\index{core points} \index{border points}
+The algorithm for DBScan clustering is depicted in algorithms~\ref{algo:bigdata:dbscan}, and the ExpandCluster routine is
+expanded in algorithm~\ref{algo:bigdata:expand}. 
+The reader should be able to follow it from the above definitions and the embedded comments. Note that the data points in a cluster 
+are not labeled as core points or border points in the algorithm. In a cluster, all data points are density connected, and all border 
+points are density reachable from any core point. 
+%
+The main advantages of DBScan over K-Means algorithm are as follows:
+\begin{enumerate}
+	\item DBScan does not assume a fixed number of clusters ($k$). Instead it discovers the number of clusters in a dataset.
+	\item DBScan can identify the ``outliers'', which lie far from other data points. K-Means clustering assigns such outliers
+		to some clusters, which adversely affects computation of cluster means also.
+	\item K-Means clustering works only when the cluster spaces are convex. DBScan can work with any arbitrary cluster space.
+\end{enumerate}
+
+\noindent
+Figure~\ref{fig:bigdata:kmeans-dbscan} shows the essential differences between clustering results with K-Means and DBScan algorithms with
+the same dataset. We have chosen $k = 2$ for the K-Means algorithm. The result of K-Means algorithm could be different with choice 
+of initial cluster centers. The computational complexity of DBScan algorithm is $O(n^2)$, which can be reduced to $O(n.\text{log } n)$ with
+indexed data-structure (e.g. KD-tree) in low dimensional data-spaces.
+
+\begin{figure}[htbp!]
+\subfigure[]{
+                \begin{minipage}{0.5\linewidth}
+                \centerline{
+			\epsfig{figure=./Bigdata/kmeans.eps,width=0.8\linewidth}
+                }
+                \end{minipage}
+        }
+\subfigure[]{
+                \begin{minipage}{0.5\linewidth}
+                \centerline{
+			\epsfig{figure=./Bigdata/dbscan.eps,width=0.8\linewidth}
+                }
+                \end{minipage}
+        }
+	\caption{Differences in clustering results: (a) K-Means algorithm ($k=2$), and (b) DBScan algorithm. 
+		[\wikideri{Chire}{DBSCAN-density-data.svg}]}
+	\label{fig:bigdata:kmeans-dbscan}
+\end{figure}
+
+\subsubsection*{Distributed DBScan Algorithm}
+\label{sec:bigdata:mrdbscan}
+
+\index{distributed clustering!density based algorithm}
+\index{MR-DBScan}
+A distributed algorithm for DBScan has been reported in~\citep{Xu:1999}, which has been implemented with some modifications on Map-Reduce
+platform (MR-DBScan~\citep{He:2011}). Like in the distributed algorithm for K-Means clustering, MR-DBScan algorithm also depends
+on partitions of data to be processed by independent computers, and the clusters found in these partitions be merged. The processing of 
+independent partitions of data has been mapped to {\em map} function, and the subsequent merge to {\em reduce} function in Map-Reduce 
+framework.
+
+\index{R*-tree}
+In order to improve the performance of a distributed clustering algorithm, there should be minimum message communication overhead
+between the computers processing different partitions of data. In contrast to K-Means algorithm (which uses a centroid based approach),
+DBScan algorithm uses a density-based approach, and expands the clusters by exploring the neighboring data-points. Thus, unlike in
+distributed K-Means algorithm (where the data is partitioned at random, or based on their sources), the nearby data points which are 
+more likely to be parts of the same cluster need to be placed in the same partition for a distributed DBScan algorithm. 
+This is achieved by partitioning the data in rectangular subspaces using R*-tree indexing~\citep{Beckmann:1990}, or grid 
+file~\citep{Nievergelt:1984}.  Since the performance of DBScan algorithm depends on the number of data points, the subspaces need to 
+contain (almost) equal number of data points for load balancing.  All instances of DBScan algorithms that run on different subspaces
+use common parameters $(\epsilon,\mu)$. 
+
+\begin{figure}[htbp!]
+\subfigure[]{
+                \begin{minipage}{0.5\linewidth}
+		\centerline{
+%			\scalebox{0.6}{\input{./Bigdata/subspace.pgf}}
+			\epsfig{figure=./Bigdata/subspace.eps,width=0.8\linewidth}
+		}
+                \end{minipage}
+        }
+\subfigure[]{
+                \begin{minipage}{0.5\linewidth}
+		\centerline{
+%			\scalebox{0.6}{\input{./Bigdata/halo.pgf}}
+			\epsfig{figure=./Bigdata/halo.eps,width=0.8\linewidth}
+		}
+                \end{minipage}
+        }
+	\caption{Subspaces for distributed DBScan algorithm. (a) reachability across subspaces, and (b) halo and inner halo.
+		[\wikideri{Chire}{DBSCAN-density-data.svg}]}
+	\label{fig:bigdata:subspace}
+\end{figure}
+
+Some of the clusters found in the subspaces may need to be merged in the final result. For example, let us consider two adjacent 
+subspaces $S_i$ and $S_j$ as shown in figure~\ref{fig:bigdata:subspace}(a). Let $p$ be a core point in a cluster $C_{ik}$ discovered in 
+subspace $S_i$. Assume that a point $q$ in subspace $S_j$ is direct density reachable from $p$ with respect to $(\epsilon,\mu)$. 
+Now there can be three cases:
+
+\begin{enumerate}
+	\item $q$ is an outlier in subspace $S_j$. In this case, $q$ should be treated as a part of cluster $C_{ik}$.
+	\item $q$ is a border point in some cluster $C_{jl}$ in partition $S_j$. In this case, the status of $q$ should not change.
+	\item $q$ is a core point in a cluster $C_{jl}$ in partition $S_j$ (figure~\ref{fig:bigdata:subspace}(a) depicts this case). 
+		In this case, the clusters $C_{ik}$ and $C_{jl}$ should be merged.
+\end{enumerate}
+
+Discovering the points (like $q$) that are direct density reachable from $p$ but lying in other subspaces, requires significant 
+communication overheads between computers processing adjacent subspaces. In order to avoid such communications, each computer is
+provided with some data from the bordering subspaces along with the data for it's own subspace. The additional data space provided 
+with a subspace is called the {\em halo} for the subspace. Conversely, every subspace will have an {\em inner halo}, the area 
+within the subspace that is made available to it's bordering subspaces. The halo and inner halo for a subspace $S_i$ is shown in
+figure~\ref{fig:bigdata:subspace}(b).  
+%
+The local DBScan algorithm for subspace $S_i$ processes all data points in its halo together with it's native datapoint. However,
+there are some differences with the DBScan algorithm. 
+\begin{enumerate}
+	\item For the points within $S_i$, the algorithm distinguishes between the ``core'' and the ``border'' points.
+	\item When a cluster extends to a point in the halo of $S_i$ (like the point $q$ in figure~\ref{fig:bigdata:subspace}(a)), the 
+		algorithm does not classify it either as a core or a border point. Instead, it is labeled as a ``in-queue'', and
+		placed in a {\em Merge Candidate} (MC) queue, together with the point $p$ and the cluster-id $C_{ik}$ to which it
+		belongs, from where it is reached.
+\end{enumerate}
+
+\noindent
+MR-DBScan introduces a stage between the map and the reduce stages, which analyzes the MC queues to find the cluster-pairs in 
+adjacent subspaces that can be merged. Form the earlier discussions, we see that two clusters $C_{ik}$ and $C_{jl}$ found in 
+adjacent subspaces $S_i$ and $S_j$ can be merged, iff $\exists (p \in S_i, q \in S_j)$, such that
+
+\begin{figure}[htbp!]
+	\centerline{
+%		\scalebox{0.6}{\input{./Bigdata/mrdbscan.pgf}}
+		\epsfig{figure=./Bigdata/mrdbscan.eps,width=0.8\linewidth}
+	}
+	\caption{Process data-flow for MR-DBScan clustering algorithm}
+	\label{fig:bigdata:mrdbscan}
+\end{figure}
+
+\begin{enumerate}
+	\item In subspace $S_i$, $p$ is in inner halo of $S_i$ that intersects with the halo of $S_j$ and a core point in $C_{ik}$; 
+		and $q$ is in the halo of $S_i$ that intersects with the inner halo of $S_j$.
+	\item In subspace $S_j$, $q$ is in inner halo of $S_j$ that intersects with the halo of $S_i$ and a core point in $C_{jl}$; 
+		and $p$ is in the halo of $S_j$ that intersects with the inner halo of $S_i$.
+\end{enumerate}
+
+\noindent
+The MC queue analysis results in a global view of the clusters, and the local cluster ids in different subspaces are mapped to global
+cluster ids. It may be noted that a global cluster may span over three or more partitions, and several local cluster ids can map onto
+the same global id. The global ids serve as the keys for merging the local clusters, which correspond to the reduce processes 
+in Map-Reduce paradigm, and are scheduled in parallel. Finally, the cluster information is collated and reported. 
+%
+To summarize, the MR-DBScan algorithm is performed in four stages, the data-flow across which is as shown in 
+figure~\ref{fig:bigdata:mrdbscan}.
+
+\subsection{Stream Clustering}
+\label{sec:bigdata:stream}
+
+\index{distributed clustering!stream data}
+\index{stream data clustering}
+\index{stream data analysis}
+The clustering algorithms described above assumes a static dataset, i.e. the data is available at all times either in a centralized 
+store or distributed over a number of computers in a distributed system. But, in many systems (e.g. IoT based systems) data is 
+generated in a continuous stream, and it may be extremely expensive and unnecessary to store all the data. Nevertheless, such data
+may need to be clustered and the abstract information may need to be stored for further analytic activity. We shall deal with
+algorithms for stream clustering in this section.
+
+Formally, a data stream can be defined as a sequence: $\left(x_1, x_2 \dots x_n\right)$, when each of the $x_i$s 
+represent a data of dimension $d$. The sequence is potentially unbound $(n \rightarrow \infty)$. In order to process such data,
+it is quite evident that (a) all data cannot be stored in memory, and (b) the clusters in the data stream need to be incrementally
+found. It is also necessary to bear in mind that the data generation process may be non-stationary, i.e, the probability distribution 
+of the data may change over time, implying that new clusters may emerge. 
+
+The stream clustering algorithms generally operate in two stages: (a) an online stage that summarizes the stream data, and (b) an 
+offline stage that uses the summary data to generate data clusters. In this section, we discuss BIRCH algorithm~\citep{Zhang:1997} 
+for centroid-based stream data clustering, which introduces some representations for summary data that has been widely used in many 
+other stream clustering algorithms at a later date.
+
+\index{BIRCH algorithm}
+The data already processed by BIRCH is summarized in the form of a {\em CF-Tree}, which is organized as a B+ Tree and where each
+node represents a {\em Cluster Feature} (CF) vector. The leaf nodes of the tree represent the clusters found in the data. The
+intermediate nodes represent super-clusters of their respective descendents, with the root node representing the entire data-set. 
+BIRCH uses the following parameters to represent a CF vector: (a) $n$: the
+number of data points, (b) $ls = \sum_{i=1}^n x_i$: the sum of the data-points, (c) $ss = \sum_{i=1}^n x_i^2$: the sum of squares
+of the data points, where $x_1, x_2 \dots x_n$ represent the data points in the cluster. Each of the parameters can be computed
+incrementally with little computational overhead.
+%
+The parameters are sufficient to compute the parameters that characterize a centroid-based cluster:
+
+\begin{flalign}
+	\text{Number of data-points in the cluster}:
+		&\hspace{0.5 cm} n \\
+	\text{The centroid of the cluster}:
+		&\hspace{0.5 cm}c = \frac{\sum_{i=1}^n {x_i}}{n} = \frac{ls}{n} \\
+	\text{The radius of the cluster}:
+		&\hspace{0.5 cm}r = \sqrt{\frac{\sum_{i=1}^n (x_i - c)^2}{n}} = \sqrt{\frac{ss}{n} - \left(\frac{ls}{n}\right)^2}\\
+	\text{The diameter of the cluster}: 
+		&\hspace{0.5 cm}d = \sqrt{\frac{\sum_{i=1}^n \sum_{j=1}^n (x_i - x_j)^2}{n.(n-1)}} 
+		= \sqrt{\frac{2n.ss - 2.(ls)^2}{n.(n-1)}} 
+\end{flalign}
+
+
+When some new data arrives, it descends the B-Tree (by choosing the cluster whose centroid is closest to the data point) from the root
+to a leaf node. It is compared with the CF of the leaf node to decide whether it should be included in the node, or a new node needs 
+to be created.  
+%
+There are two possible cases:
+\begin{enumerate}
+	\item If the inclusion of the data does not make the cluster diameter exceed a pre-defined threshold, then the data is absorbed
+		in the cluster, and CF vector of the cluster is updated. 
+	\item Otherwise, a new node is created for this data-item. It's path from the root node is defined, and the B+ Tree is reorganized
+		to keep it balanced, if necessary.
+\end{enumerate}
+
+\noindent
+Thus, the CF-Tree is built incrementally as new new data arrive. The leaf nodes that contain very few data items are considered as
+outliers. As new data arrives, the clusters keep growing. Some of the outlier nodes may get rapidly populated signifying a change
+in the data generation process. Further, as the clusters grow, there may be a need to merge some of them. This is done through an 
+offline process by analyzing the parameters of the merger candidates, and an {\em inter-cluster distance} between them. The parameters 
+of CF are additive making the merger simpler. 
+% When two clusters $C_1$ and $C_2$ are merged to form a new cluster, the CF for the merged cluster $C$ can be found 
+% as $n = n_1 +n_2$, $ls = ls_1 + ls_2$, and $ss = ss_1 + ss_2$. 
+Once two clusters are merged, the CF-Tree need to be reorganized.
+
+\noindent
+\index{BIRCH algorithm}
+In summary, the advantages of the BIRCH algorithm are as follows:
+
+\begin{enumerate}
+	\item Processing of each arriving data has very little processing overheads, and hence the cluster information is 
+		updated in near real-time. 
+	\item If the data represents some process control data, abnormal situations (outliers) are quickly detected.
+	\item New patterns in a non-stationary data generation process is detected early. 
+	\item Representation of the clusters is compact, and it's increase with data size is sublinear (the model grows only
+		when new clusters are discovered).
+	\item It can be performed on the fog nodes with dynamic data in a distributed fashion, and the summary data can be 
+		communicated to the cloud server for any further processing. This alleviates network bottlenecks and data
+		storage requirements on the cloud.
+\end{enumerate}
+
+% \hgcomment{Check on distributed ML - e.g. Jyoti's work}
