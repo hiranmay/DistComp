@@ -1,0 +1,265 @@
+\section{Distributed Knowledge Representation}
+\label{sec:knowledge:dk}
+
+\index{RTM}
+\index{representational theory of mind|see {RTM}}
+The term ``knowledge'' has been defined in many different ways in literature, some of which are philosophical and some are
+technical. Use of knowledge in computing demands that the knowledge be formally encoded and be processed with formal algorithms.
+For our purpose, we define knowledge is an organization of data that is an abstracted representation of a domain. We consider
+knowledge to be composed of named concepts, and that the names can be used to create propositions. A set of propositions create
+a domain model, from which conclusions can be drawn. This is in compliance with the Aristotelian view of {\em Representational 
+Theory of the Mind} (RTM)~\citep{Stanford:2020}.
+
+\index{distributed knowledge}
+{\em Distributed knowledge} in a group of agents is the aggregate of the knowledge possessed by the individuals agents in the group. 
+Intuitively, the agents in a community can have access to the distributed knowledge by pooling their individual knowledge through 
+some communication mechanism. Formally, distributed knowledge can be defined as:
+
+\index{distributed knowledge|textbf}
+\begin{definition} [distributed knowledge]
+	Let $\mathcal{G}$ be a group of distributed agents with cardinality $n$. Let, $\phi_1, \phi_2, \dots, \phi_n$ represent the
+	knowledge possessed by each of the agent in group $\mathcal{G}$. The {\em distributed knowledge} of the group $\mathcal{G}$ is
+	defined as $\phi$, iff $\bigcup_{1=1}^n \phi_i \rightarrow \phi$.~\citep{Roelofsen:2007}.
+\end{definition}
+
+\index{common knowledge}
+In this context, another term that is used for the knowledge of a group is {\em common knowledge}, which is defined as the knowledge 
+possessed by every member of the group, with an additional requirement that every member knows that others also know it. While 
+distributed knowledge of a group is weaker (broader) than individual knowledge common knowledge is stronger (narrower) that individual 
+knowledge. We shall see application of common knowledge in chapter~\ref{chap:agents}.  
+
+\subsection{Resource Description Framework (RDF)}
+
+Resource Description Framework (RDF)~\citep{Decker:2000} is a datamodel standardized by World-Wide Web Consortium (W3C) for 
+distributed knowledge representation on the web. The basic unit of knowledge representation in RDF is a {\em triplet}, comprising 
+a {\em subject}, a {\em predicate} and an {\em object}.
+
+\index{RDF triplet|textbf} 
+\begin{definition} [RDF triplet]
+  		$RDF triplet := \langle subject, predicate, object \rangle$. 
+\end{definition}
+
+\noindent
+In an RDF triplet, the subject and the object in the statement represent the two resources that being related, and the 
+predicate (attribute) represents the nature of their relationship. The relationship represented by the predicate is 
+directional, from the subject to the object. In other words, an RDF statement asserts a property of the subject, with
+the predicate defining the attribute and the object defining the property value.
+
+\index{RDF statement|textbf}
+\begin{definition} [RDF Statement]
+	Asserting an RDF triplet makes it an {\em RDF statement}.
+\end{definition}
+
+\index{semantic network}
+\noindent
+A set of RDF statements forms an RDF graph, where each node represents a {\em concept} which is either a subject or an object
+in the RDF statement. Each edge in the graph represents a predicate. For example, a set of RDF statements shown in 
+listing~\ref{lst:knowledge:rdf1} and the corresponding graphical representation is depicted in figure~\ref{fig:knowledge:rdf1}. 
+The graphical representations is also called a {\em semantic network} as the graph depicts knowledge as a network of concepts,
+and that the semantics of the concepts emerge from their relations depicted in the network.
+ 
+\begin{lstlisting} [caption=Examples of simple RDF statements, label=lst:knowledge:rdf1]
+Book1     instance-of   Book .
+Author1   instance-of   Author .
+Author2   instance-of   Author .
+Book1     author        Author1 .
+Book1     author        Author2 .
+Book1     title         "Distributed Computing" .
+\end{lstlisting}
+
+\begin{figure}[!htbp]
+	\centerline{
+		\epsfig{figure=Knowledge/rdf1-g.eps, width=0.6\linewidth}
+	}
+	\caption{A graphical representation for the RDF statements in listing~\ref{lst:knowledge:rdf1}}
+	\label{fig:knowledge:rdf1}
+\end{figure}
+
+\index{RDF graph|textbf}
+\begin{definition}[RDF graph]
+	An {\em RDF graph} is a set of RDF triples. 
+\end{definition}
+
+\index{RDF source|textbf}
+\begin{definition} [RDF source]
+	A persistent container (e.g. a file) of RDF statements is called an {\em RDF source}.
+\end{definition}
+
+\noindent
+\index{N3} \index{Notation-3} \index{Turtle}
+An RDF graph is a static snapshot of some information at any given point of time. Since an RDF graphs are defined as mathematical 
+sets, adding or removing triples from an RDF graph yields a different RDF graph. The content of an RDF source may change over time. 
+A snapshot of the contents of an RDF source can be expressed as an RDF graph. 
+%
+An RDF graph can be represented with various notations in an RDF source, for instance XML-based~\citep{RDF-XML:2014}, Notation 3 
+(or, N3)~\citep{Berners-Lee:2011} and Turtle~\citep{Turtle:2011}. We shall follow the Turtle notation, which is compact and convenient 
+for human reading and writing, in this book. 
+
+\index{resource}
+Each of the entities (subjects, predicates, or objects) in an RDF triplet is treated as an an (information) {\em resource}, and is 
+uniquely identified with an IRI.
+
+\begin{definition} [International Resource Idendifier (IRI)]
+	An IRI {\em International Resource Identifier} (IRI) is a string of characters that refers to an entity in the world of 
+	discourse, which is called a {\em resource}. IRI is a generalization of URI/URL and has a similar representation. 
+	An IRI can be used to represent a subject, object or predicate in a RDF triplet, or an RDF source.
+\end{definition}
+
+\noindent
+\index{RDF resource}
+Identifying the entities in RDF with IRIs enables distributed knowledge representation. A RDF graph can be defined with resources
+on different nodes on a distributed system. RDF~\citep{Decker:2000} and RDF Schema (RDFS)~\citep{RDFS:2014} provides a set of 
+data modeling resources for data modeling, which are used in most of the RDF graphs. Further, several organizations have 
+recommended standard vocabulary for commonly used resources, which are generally referred to in other RDF graphs~\citep{Aleman-Meza:2007}. 
+Using some of such data models, we can rewrite the RDF statements in listing~\ref{lst:knowledge:rdf1} with IRI's as
+in listing~\ref{lst:knowledge:rdf2}.  
+%
+\index{prefix!in RDF source}
+Lines 1--4  in the listing shows the definitions of the prefixes, which are shorthands for the namespaces for the resources 
+referred to. The resources enclosed in angular brackets ($< >$) are locally defined in the current source. Note that the concepts
+``Author'' and ``Book'' and the predicate ``author'' have been defined as subclasses and subproperty of standard vocabularies defined 
+in schema.org and DCMI (lines 5--7). The object in line 14 is a string literal and has been represented by enclosing it in quotes
+(`` ''). In general, a literal can have different data-types, e.g. a string, an integer, a date, etc. and can be described with XML 
+schema definition~\citep{XSD:2012}. To keep the examples simple, we shall consider string literals only in this book. 
+
+\begin{lstlisting} [caption=Example of RDF statements expressed with IRIs, label=lst:knowledge:rdf2]
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .  
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .        
+@prefix dc:   <http://purl.org/dc/terms/> .                    
+@prefix sc:   <https://schema.org/> .                          
+
+<#Author>    rdfs:subClassOf     sc:Person . 
+<#Book>      rdfs:subClassOf     dc:BibliographicResource .
+<#author>    rdfs:subPropertyOf  dc:contributor .
+
+<#Book1>     rdf:type         <#Book> .
+<#Author1>   rdf:type         <#Author> .
+<#Author2>   rdf:type         <#Author> .
+mb:Book1     <#author>        <#Author1> .
+mb:Book1     <#author>        <#Author2> .
+mb:Book1     <#title>         "Distributed Computing" .
+\end{lstlisting}
+
+\noindent
+\index{anonymous resource} \index{blank node}
+\index{reification}
+Besides IRI and literals, there is another type of resource in RDF. An {\em anonymous resource} (also called a {\em blank node}) 
+is a resource in RDF, for which an IRI is not allocated~\citep{RDF:2004}. The subject of an RDF statement can either be an IRI 
+or an {\em anonymous resource}, the predicate an IRI and the object an IRI, a blank node or a literal. 
+
+Also, note that a predicate in one statement in an RDF graph can be used as a subject 
+or an object in another statement, which enables definition of new properties. For example, a new predicate ``author'' has been 
+defined in line 8, and used in lines 13--14 in the example. An RDF statement can also be used as a resource, and assertions can
+be made about the statement. This is known as {\it reification}.
+
+We extend the above example and provide an example of distributed knowledge representation, where the knowledge is assumed to be encoded 
+in two sources (files), say \url{http://biblio.org/mybiblio.n3} and \url{http://authors.org/myauthors.n3}. We shall use this example 
+later in this chapter, and refer to the sources as {\it mybiblio} and {\it myauthors} respectively. Each of the sources contain an RDF 
+graph. The RDF graph in {\it biblio} contains some information about a book, and refers to the RDF graph in {\it authors}, which 
+contains information about it's authors. Both of the RDF graphs refer to external resources.
+
+\begin{lstlisting} [caption=Example of distributed knowledge representation using RDF, label=lst:knowledge:rdf-dataset]
+# -------- http://biblio.org/mybiblio.n3 -------------------------
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix dc:   <http://purl.org/dc/terms/> .                    
+@prefix ma:   <http://authors.org/myauthors.n3#> .
+
+<#Book>
+    rdfs:subClassOf dc:BibliographicResource .
+<#Book-1>
+    rdf:type       <#Book> ;
+    dc:contributor ma:Author-1 ,
+                   ma:Author-2 ;
+    dc:title       "Distributed Systems" ;
+    dc:publisher   "IEEE_Wiley Press" ;
+    dc:date        "2021" .
+
+# -------- http://authors.org/myauthors.n3 -------------------------
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix dc:   <http://purl.org/dc/terms/> .                    
+@prefix sc:   <https://schema.org/> .
+
+<#Author>
+   rdfs:subClassOf sc:Person .
+<#Author-1>
+   rdf:type       <#Author> ;
+   rdfs:label     "RKG" ;
+   sc:name        "Ratan Ghosh" ;
+   sc:affiliation "IIT-Bhilai" .
+<#Author-2>
+   rdf:type       <#Author> ;
+   rdfs:label     "HG" ;
+   sc:name        "Hiranmay Ghosh" ;
+   sc:affiliation "IIT-Jodhpur" .
+\end{lstlisting}
+
+\begin{figure}[!htbp]
+	\centerline {
+		\epsfig{figure=Knowledge/rdf-dataset, width=\linewidth}
+	}
+	\caption{Graphical representation of distributed knowledge described in listing~\ref{lst:knowledge:rdf-dataset}}
+	\label{fig:knowledge:rdf-dataset}
+\end{figure}
+
+Considering that the knowledge incorporated in the two RDF graphs {\it myauthors} and {\it mybiblio} be possessed by two distinct
+agents, distributed knowledge comprises an implication of the union of the two graphs. Note that there can be duplications, 
+incompleteness and inconsistencies in the information presented in the knowledge units. We shall review an approach to resolve
+such issues in section~\ref{sec:knowledge:constrained}.
+
+\index{relational database}
+\index{row-wise split} \index{column-wise split}
+If we think of the data in terms of traditional relational tables (where each row describe a resource, and each column describes a 
+property of a resource), both row-wise and column-wise splits are possible in an RDF description. As an example of row-wise split, 
+it is possible for different organizations to maintain the list of their authors and their attributes, following their own schema. 
+The bibliographic databases may also be maintained by different libraries or publishing houses.
+%
+As an example of column-wise split, different nodes may maintain different properties of the same resource, such as a node maintaining 
+the information about the publications by an author, while another maintaining the affiliation of the authors. RDF data in real life
+is generally a combination of the two types of split, and heterogeneous schema definitions on the different partitions. In effect, RDF 
+provides a tremendous flexibility by allowing anybody to say anything about any resource, and to keep the information anywhere. All the 
+information gets automatically integrated by references to IRIs with global scope.
+
+\subsection{Web Ontology Language (OWL)}
+
+The modeling primitives supported in RDF and RDFS enable creation of distributed knowledge, but lacks formalism. There are no
+constraints on use of resources (subjects, predicates or objects) in any RDF statement. While it provide tremendous flexibility
+to RDF for knowledge representation, it can result in inconsistencies in the knowledge-base. For example, it is possible to define 
+``Book'' as a bibliographic resource, and still attribute animal-like properties (say, has a tail) to it. Thus, the representational 
+primitives in RDF are inadequate for modeling the knowledge in specific domains of discourse.
+
+\index{frame-based knowledge representation}
+\index{ontology} \index{class} \index{property}
+{\em Web Ontology Language} (OWL)~\citep{OWL:2004} builds on RDF and RDFS to specify constraints that enables defining a domain
+model. It is possible to realize frame-based knowledge representation~\cite{Minsky:1974} using OWL. For example, 
+figure~\ref{fig:knowledge:frame} depicts a frame-based representation for the knowledge presented in figure~\ref{fig:knowledge:rdf-dataset}.
+The upper part (above the dashed line) of the diagram depicts a domain model, called the {\em ontology}. It comprises a set
+of classes, their properties, and the relations between the classes, e.g. a book has a title, one or more authors and a publisher. 
+An ontology standardizes the vocabulary and their semantics to be used in describing a domain.
+The lower part of the diagram depicts a set of instances, whose properties are defined and related based on the model defined 
+in the ontology.  OWL provides several advanced ontology modeling constructs, namely for defining different types of classes 
+(e.g. sets and enumeration types), class operations (e.g. union and intersection of sets), and semantics of properties of the 
+properties (e.g. such as transitivity, symmetry, etc.).
+
+\begin{figure}[!htbp]
+	\centerline{
+		\epsfig{figure="Knowledge/frame.eps", width=\linewidth}
+	}
+	\caption{Frame based knowledge representation}
+	\label{fig:knowledge:frame}
+\end{figure}
+
+\index{ontology|textbf}
+\begin{definition}[ontology]
+	An {\em ontology} defines a set of representational primitives with which to model a domain of knowledge.
+	The representational primitives are typically classes (or sets), attributes (or properties), and relationships 
+	(or relations among class members)~\citep{Gruber:2008}. 
+\end{definition}
+
+\index{W3C} \index{RDF graph}
+Like in an RDF graph, the resources in a OWL document can be distributed over the Internet. Valid OWL documents and OWL schema 
+definitions are valid RDF documents, and can be parsed with an RDF parser. An OWL parser puts additional restrictions to check 
+the consistency of the statements and compliance with the schema definition. We shall not discuss further about OWL in this book, 
+except for mentioning that it is the standard recommended by W3C for web-based knowledge representation. 
+

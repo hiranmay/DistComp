@@ -1,0 +1,37 @@
+\section*{Exercises}
+
+\begin{enumerate}
+	\item Represent the infobox information given in listing~\ref{list:knowledge:wiki-infobox} in RDF format.
+	\item Identify all paths and schema paths in the RDF graphs presented in figure~\ref{fig:knowledge:rdf-dataset}.
+	\item Draw the BGP for SPARQL query provided in listing~\ref{list:knowledge:sparql-1}, and identify the query results (matching 
+		minimal subgraphs) in dataset depicted in figure~\ref{fig:knowledge:rdf-dataset}.
+	\item This exercise involves creating and storing an RDF dataset and querying on it. 
+		\begin{itemize}
+			\item Download the citations for about 10 documents cited at the end of this chapter from ACM Digital library 
+				(\url{dl.acm.org}) in bibtex format. 
+			\item Write a program to parse the bibtex records and create 
+				an RDF data-source containing the bibliographic entries. Note that there is no unique data model and
+				you need to design your own, following the suggestions:
+					\begin{itemize} 
+						\item Treat authors, journals, conferences, etc. as resources, and represent them 
+							as IRIs (not as literals).  
+						\item Use standard vocabularies (e.g. Dublin Core (DCMI), Schema.net, SKOS, etc.)
+							as far as possible, and define your own vocabulay, if absolutely needed. 
+						\item You may skip some of the fields, but keep those required for your queries.
+					\end{itemize}
+			\item Download and install GraphDB Free version (\url{http://graphdb.ontotext.com/}) and import the data
+				in the database.
+			\item Express some queries, such as those provided below, in SPARQL, execute them on the database, and 
+				verify the results.
+				\begin{itemize}
+					\item Given a document title, find it's bibliographic details (authors, year, journal, conference, 
+						etc.).
+					\item Given a document title, find all other documents written by it's authors.
+					\item Given an author's name, find all his/her co-authors.
+					\item Given a year, find the authors who published in that year.
+				\end{itemize}
+		\item Repeat the same experiment with Apache Jena (\url{https://jena.apache.org/}) TDB triple-store.
+		\end{itemize}
+	\item Implement the Bayesian distributed data integration algorithm discussed in isection~\ref{sec:knowledge:constrained} over
+		Pregel's algorithm discussed in chapter~\ref{chap:bigdata}. Assume any arbitrary connections amongst the nodes.
+\end{enumerate}

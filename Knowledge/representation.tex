@@ -1,0 +1,83 @@
+\section{Knowledge Representation Techniques} 
+
+The term ``knowledge'' has been defined in many different ways in lieterature, some of which are philosophical and some are
+operational. Use of knowledge in computing demands that the knowledge be formally encoded and be processed with formal algorithms.
+For our purpose, we define knowlede is an organization of data that is an abstracted representation of a domain. We consider 
+knowledge to be composed of named concepts, and that the names can be used to create propositions, from which conclusions can 
+be drawn. This is in compliance with the Aristotelian view of {\em Representational Theory of the Mind} (RTM)~\citep{Stanford:2020}. 
+%
+In this section, we present a brief review two of knowledge representation techniques that conforms to the Aristotelian view
+of establishing relations among concepts to create prepositions, which when represented through formal languages, can be
+reasoned with. We shall deal with the subject to the extent that enables us to appreciate the issues of distributed processing 
+techniques to deal with the body of knowledge that is essentially fragmented, and partitions of which may reside over a multitude 
+of processing nodes on the Internet. In-depth discussions on knowledge representation and reasoning techniques can be found in any 
+standard text-book on artificial intelligence.
+
+\subsection{Semantic Network}
+
+\index{semantic network|textbf} \index{semantic net|see {semantic network}}
+In relational models, a model of a domain is built with data related to each other. For example, a bibliographic model can be
+built by relating a book with it's authors, year of publication, and such other pieces of data. A domain model, in general,
+comprises many such relations. A {\em semantic network} or a {\em semantic net} provides a graphical representation for such domain 
+relations. For example, figure~\ref{fig:dk:semanet} depicts a semantic network representation for the relations across a handful 
+of entities. 
+%
+\index{concept} \index{relation}
+In general, a semantic network can have any arbitrary entities (called the concepts) as the nodes, and any arbitrary relation between 
+a pair of them. In it's basic form, a semantic net does not commit the semantics of the concepts and the relations. This provides 
+tremendous flexibility to the representation, but also results in lack of formalism. There are many variants of semantic net, some 
+of which impose constraints on the basic representation to make them more formal. A detailed discussion on the properties of different 
+variants of semantic networks can be found in~\cite{Sowa:1992}.
+
+\begin{figure}
+	\centerline{
+		\epsfig{figure=./Knowledge/semanet.eps,width=0.8\linewidth}
+	}
+	\caption{An example of a Semantic Network}
+	\label{fig:dk:semanet}
+\end{figure}
+
+\subsection{Frame-based Representation}
+
+\index{frame based knowledge representation|textbf}
+While the semantic net allows arbitrary entities to be linked together with arbitrary relations, the frame-based knowledge 
+representation scheme~\cite{MInsky:1974} provides a schema for structuring the relation. We explain the frame based 
+representation with an example in figure~\ref{fig:dk:frame} that depicts the same entities present in figure~\ref{fig:dk:semanet}. 
+%
+\index{frame (knowledge representation)}
+A prototype structure, called a {\em frame}, is created for a {\em class} of entities that are characterized by some common 
+attributes, e.g. a book is characterized by it's author(s), title, etc.  An individual entity that constitutes a class (e.g. 
+the ``Distributed Systems'' book) is called an {\em instance} of the class. A class can be a {\em subclass} of another (designated
+by `is-a' relation), meaning that all instances of the former are also instances of the latter, for example, all authors are persons.
+
+\begin{figure}[htbp!]
+	\centerline{
+% 		\scalebox{0.6}{\input{./Knowledge/frame.pgf}}
+		\epsfig{figure=./Knowledge/frame.eps,width=0.8\linewidth}
+	}
+	\caption{An example frame-based knowledge representation}
+	\label{fig:dk:frame}
+\end{figure}
+
+\index{slot} \index{filler}
+\index{generic frame} \index{specific frame}
+In the figure, the entities represented with bold letters above the dashed horizontal line represent the classes. ``Thing''
+is the super-class of all the classes, meaning simply that everything is a ``thing''. The text in the boxes below the class-names
+indicate their attributes, called the {\em slots}, such as a person has name as an attribute, etc. A subclass of a class inherits 
+the attributes of the latter. For example, an author, being a person, will have a name. We have adopted two notations to mean 
+something special.
+A dotted attribute box means an optional attribute, e.g. an author may or may not have an affiliation. A `+' sign next to
+an attribute indicates that their can be multiple values for the attribute, e.g. a book can have more than one author.
+A frame representing a class is called a {\em generic frame}.
+%
+The entities represented with bold letters below the horizontal dashed line represent the entities that are instances of some
+of the classes. The boxes below the instance labels (e.g. Author-1, etc.) represent their attribute values, called the {\em
+fillers}. A frame representing an instance is called a {\em specific frame}. Note that an attribute value in a specific frame
+can be either a literal, or another instance in the knowledge-base. 
+
+\index{ontology|textbf} \index{property restriction}
+The overlaying class definitions form a schema for the property description of the individual instances, and is referred to
+as an {\em ontology} that supports modeling of a domain. For example, we have specified that a book
+need to have a title, one or more authors, etc. In frame-based knowledge representation languages, it is generally possible 
+to incorporate various {\em property restrictions} in the class definitions, which is an important requirement for domain modeling,
+e.g. the name of a person may consist of a string of alphabetic characters only. 

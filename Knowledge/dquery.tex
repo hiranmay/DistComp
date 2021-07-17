@@ -1,0 +1,533 @@
+\section{Querying RDF data}
+
+\index{SPARQL} \index{W3C}
+Knowledge is of little use unless selective parts of it can be recalled. In this section, we introduce SPARQL (pronounced ``sparkle'')
+query language, recommended by W3C. A SPARQL query operates over RDF graphs and retrieves RDF triplets that match query specification. 
+Following a brief introduction to the query language, we explain it's semantics and the query processing model for large RDF knowledgebases.
+
+\subsection{SPARQL Query Language}
+
+\index{RDF graph}
+The SPARQL query Language~\citep{SPARQL:2013} is a declarative language designed for querying RDF data. It's syntax is quite similar 
+to SQL. In general, 
+a SPARQL query operates over a RDF dataset, which consists of multiple RDF graphs. For example, the distributed knowledge in 
+listing~\ref{lst:knowledge:rdf-dataset} is spread over two data-sources, {\it mybiblio} and {\it myauthors}, which together can 
+form a dataset, as shown graphically in figure~\ref{fig:knowledge:rdf-dataset}. 
+
+\index{RDF dataset|textbf}
+\begin{definition} [RDF dataset]
+ 	An {\em RDF dataset} is a collection of RDF graphs. 
+\end{definition}
+ 
+\noindent
+
+In this book, we do not attempt to provide the full coverage to SPARQL functionality and syntax. An interested reader may refer to 
+the language specification~\citep{SPARQL:2013} or to any of the tutorials available on the web. Instead, we introduce SPARQL with a 
+couple of simple examples which can be answered with the RDF dataset depicted in figure~\ref{fig:knowledge:rdf-dataset}. 
+%
+The query shown in listing~\ref{list:knowledge:sparql-1} retrieves the names of all the authors with the book titles present in that 
+dataset, and report them in a sorted order. 
+The query presented in listing~\ref{list:knowledge:sparql-2} finds out if there is an author with the given name is available in the 
+data-store, and returns a binary output YES or NO.
+Both the queries are quite intuitive to understand, and we provide non further explanation.
+%
+The dataset for the first query comprises both the RDF graphs, while that for the second query comprises {\it myauthors} alone.
+
+\begin{lstlisting} [caption=Example SPARQL query 1,label=list:knowledge:sparql-1]
+prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> 
+prefix dc:   <http://purl.org/dc/terms/> 
+prefix sc:   <https://schema.org/> 
+prefix mb:   <http://biblio.org/mybiblio#> 
+	
+    SELECT ?name ?title
+    WHERE { 
+        ?book   rdf:type       mb:Book;
+                dc:title       ?title;
+                dc:contributor ?author.
+        ?author sc:name        ?name. 
+    }
+    ORDER BY ?name 
+\end{lstlisting}
+
+\begin{lstlisting} [caption=Example SPARQL query 2,label=list:knowledge:sparql-2]
+prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> 
+prefix sc:   <https://schema.org/> 
+prefix ma:   <http://authors.org/myauthors/#>
+
+    ASK 
+    WHERE { 
+        ?author rdf:type ma:Author
+                sc:name  "Hiranmay Ghosh" . 
+    }
+\end{lstlisting}
+
+
+\subsection{SPARQL Query Semantics}
+
+\noindent
+Formally, a SPARQL query $Q$ can be defined as a tuple
+
+\begin{equation}
+	Q = (P, DS, S, E, M)
+\end{equation}
+
+\noindent
+where, 
+\begin{itemize}
+	\item $P$ is a set of prefix declarations for resolving the namespaces, e.g. @prefix rdf: ..., etc. 
+	\item $DS$ is a dataset on which the query operates, e.g. in figure~\ref{fig:knowledge:rdf-dataset}.
+	\item $R$ is a result clause defining the result to be achieved, e.g. SELECT ?name,
+	\item $E$ is an algebraic expression that needs to be evaluated, e.g. WHERE \{ ... \}, and
+	\item $M$ is a result modifier that does some post-processing on the results, e.g. ORDER BY ?name .
+\end{itemize}
+
+\noindent
+\index{RDF triplet}
+The algebraic expression $E$ in a SPARQL query contains a set of triplet patterns $\mathcal{P} = (p_1, p_2, \dots, p_k)$, 
+each of which is in the form of an RDF triplet. A statement in a query expression can consist of RDF resources, RDF terms (literals 
+and blank nodes) and a set of variables. If $\mathcal{I}$ represents the set of all IRI's, $\mathcal{L}$ the set of literals in the 
+vocabulary of an RDF dataset, and $\mathcal{V}$ a set of variables, a triplet pattern
+
+\begin{equation}
+	p_i \in \left( \mathcal{I} \bigcup \mathcal{V} \right) \times \left( \mathcal{I} \bigcup \mathcal{V} \right)
+		\times \left( \mathcal{U} \bigcup \mathcal{L} \bigcup \mathcal{V} \right)
+\end{equation}
+
+\noindent
+\index{basic graph pattern|see {BGP}} \index{BGP}
+$\mathcal{P}$, comprising a finite set of triplet patterns, defines a {\em Basic Graph Pattern} (BGP). More complex SPARQL query 
+expressions may combine several BGPs with some specific operators, which we shall not discuss in this book.
+%
+% \noindent
+In the SPARQL query presented in listing~\ref{list:knowledge:sparql-2}, the query expression comprise two triplet-patterns 
+\begin{tabbing}
+	1234\=12345678\=1234567890\=1234587890\=123456789012345678901234567890\=\kill
+        \> $p_1$ := \> ?author \> rdf:type \> ma:Author \\
+	\> $p_2$ := \> ?author \> sc:name  \> ``Hiranmay Ghosh'' \\
+\end{tabbing}
+
+\noindent
+and the corresponding BGP is shown in the top left-corner of figure~\ref{fig:knowledge:sparql}.
+
+\index{RDF dataset}
+\noindent
+An RDF dataset is a set of triplets $\mathcal{T} = (t_1, t_2, \dots, t_n)$, where each $t_i$ belongs to
+\begin{equation}
+	t_i \in \left( \mathcal{I} \bigcup \mathcal{B} \right) \times \mathcal{I} 
+		\times \left( \mathcal{U} \bigcup \mathcal{B} \bigcup \mathcal{L} \right)
+\end{equation}
+
+\noindent
+Here $\mathcal{B}$ represents the set of blank (anonymous) nodes (not present in our example). 
+%
+The {\em query result} of a SPARQL query represented by a BGP $\mathcal{P}$ over an RDF graph $\mathcal{T}$ 
+is defined as $R \subseteq T$, where some mapping $\mu: \mathcal{V} \rightarrow \left( \mathcal{I} \bigcup \mathcal{B} \bigcup 
+\mathcal{L} \right)$ holds good.
+%
+\index{RDF graph} \index{RDF dataset}
+Informally, a BGP matches a subgraph in an RDF graph if all it's constituent triplet patterns match. A SPARQL query 
+retrieves all matching minimal subgraphs corresponding to the BGP specified in the query expression $E$. For example, the query
+shown in listing~\ref{list:knowledge:sparql-2} matches the subgraph in one of the graphs, {\it myauthors} constituting the dataset,
+as shown by the dashed contour in the lower part of figure~\ref{fig:knowledge:sparql}. In general, e.g.  for query shown in 
+listing~\ref{list:knowledge:sparql-1}, the answer can span over multiple graphs in a RDF dataset.
+
+\begin{figure}[!htbp]
+	\centerline{
+%		\scalebox{0.6}{\input{./Knowledge/sparql.pgf}}
+ 		\epsfig{figure=./Knowledge/sparql.eps,width=\linewidth}
+	}
+	\caption{SPARQL query example}
+	\label{fig:knowledge:sparql}
+\end{figure}
+
+
+\subsection{SPARQL Query Processing}
+
+\index{SPARQL client} \index{SPARQL service}
+Execution of a SPARQL query requires a {\em SPARQL service} to interpret a SPARQL query, analyze an RDF dataset in context of 
+the query, and return the retrieved results to the {\em SPARQL client}. 
+
+\index{SPARQL endpoint|textbf} \index{SPARQL endpoint!generic} \index{SPARQL endpoint!specific}
+\begin{definition} [SPARQL endpoint]
+	A {\em SPARQL endpoint} is a point of presence on an HTTP network, identified by an IRI, which a SPARQL service listens 
+	to receive requests from SPARQL clients.
+\end{definition}
+
+\noindent
+There are two types of SPARQL endpoints:
+
+\begin{enumerate}
+	\item {\em Generic endpoint}: which can query any web-accessible RDF datasets, e.g.
+		Virtuoso.
+	\item {\em Specific endpoint}: which caters to query a particular RDF dataset, e.g.
+		DBpedia SPARQL endpoint.
+		A specific endpoint may use the ontology of a dataset for query refinement to 
+		provide better results.
+\end{enumerate}
+
+\index{SPARQL client} \index{SPARQL service} \index{REST}
+\index{SPARQL protocol|textbf}
+\begin{definition} [SPARQL protocol]
+	A SPARQL client and a SPARQL service communicate with each other using {\em SPARQL protocol}. The SPARQL protocol
+	is built over HTTP and uses a REST architecture that has been discussed in chapter~\ref{chap:interprocess}.
+\end{definition}
+
+\noindent
+A SPARQL client invokes a SPARQL query with  HTTP GET or POST commands. The request consists of exactly one SPARQL query and
+optionally one or more IRIs for default and named graphs for the dataset. HTTP content negotiation is used to request a desired
+response format. The server returns a success code and the results in case of successful operation, or an appropriate failure code.
+
+\index{triple store|see {TDB}} \index{triple database|see {TDB}}
+\index{graph database}
+\index{Apache Jena|see {Jena}} \index{Jena}
+\index{GraphDB} \index{gStore}
+\index{BGP} \index{RDF graph} \index{NoSQL database} 
+As indicated earlier in this section, processing of a SPARQL query involves matching of the BGP triplets with the triplets
+in an RDF graph. For efficient operations, The triplets in an RDF graph are stored in SQL or NoSQL databases. For example, 
+GraphDB~\citep{Guting:1994} and gStore~\citep{Zou:2014} are graph databases that can store a large number of RDF triplets, 
+and support SPARQL queries. For fast access, different 
+index-structures are usually constructed with these databases. Triple Store, a database optimized for storing RDF triples,
+has been adopted in  Apache Jena project, an  open-source Java framework for semantic web and linked data applications. 
+
+\index{TDB|textbf}
+\begin{definition} [Triple store]
+	A {\em Triple store (or, triple database)} is a dedicated RDF data-store, designed to provide fast access. It stores 
+	the subject, predicate 
+	and object (will henceforth be abbreviated as $S$, $P$ and $O$ respectively), each converted to a numeric index,
+	for each RDF triplet in a RDF graph. When an RDF dataset consists of multiple RDF graphs, a triple-store additionally 
+	stores the graph-id $G$, unique to the dataset, to which the triplet belongs.
+\end{definition}
+
+\noindent
+\index{H$_2$RDF+} \index{Jena} \index{TDB}
+A triple-store in Jena comprises three composite index-tables for the RDF terms in the form of B+ trees: $SPO$, $POS$ and 
+$SOP$~\citep{Ali:2014}, 
+where each index is a concatenation of the three entities in a triplet. In some implementations, index-tables are created with all 
+the six permutations, namely $SPO$, $SOP$, $POS$, $PSO$, $OSP$ and $OPS$, and some other complex ones. No triple-tables are maintained
+in these implementations, 
+since the complete information is available in the index-tables. Creation of exhaustive index tables results in more space requirement, 
+but provides faster access to the triples satisfying a pattern (with one or more variables). Some triple-stores, such as  
+H$_2$RDF+~\citep{Papailiou:2014} creates the tables sorted in the order of frequency of the terms in the RDF dataset, so that the
+average search time for linear search over the queries is minimized.
+Researchers have proposed many other optimization and indexing schemes for faster access to the triplets~\citep{Ozsu:2016}. Despite 
+best optimization, the capacity of a centralized SPARQL server is limited by the available memory, storage and processing power of 
+the server node.  This limitation is overcome with distributed SPARQL servers discussed in the following section. 
+
+\subsection{Distributed SPARQL Query Processing}
+\label{sec:knowledge:distributed-sparql}
+
+\index{SPARQL!distributed query processing}
+In the previous section, we have discussed SPARQL query and their basic processing methods. We have assumed that the entire RDF
+dataset is indexed in a triple store hosted on a server, and the query processing happens on the database. As the volume of RDF
+dataset distributed over the Internet can be unbounded, indexing all data on a central server becomes unrealistic. This, motivates 
+SPARQL query processing in a distributed manner. 
+%
+Distributed SPARQL query  processing has three essential goals:
+\begin{itemize}
+	\item {\em Scale}: Ability to store and process large volume of RDF data,
+	\item {\em Speed}: Ability to satisfy a query in a shorter duration, and
+	\item {\em Throughput}: Ability to process larger number of queries in unit time.
+\end{itemize}
+
+\begin{figure}[!htbp]
+	\centerline{
+%		\scalebox{0.8}{\input{./Knowledge/cluster-tdb.pgf}}
+		\epsfig{figure=./Knowledge/cluster-tdb.eps,width=0.8\linewidth}
+	}
+	\caption{Cluster-TDB architecture (\basedon{Owens:2009})}
+	\label{fig:knowledge:cluster-tdb}
+\end{figure}
+
+\noindent
+\index{TDB} \index{cluster-TDB} \index{Jena}
+A straightforward solution for data scaling is to place the data on a distributed storage system. For example, Jena-TDB has
+been ported on to a cluster computing platform (Cluster-TDB)~\citep{Owens:2009}. The index size of an RDF database is generally comparable
+to the data-size itself, since triple stores employ exhaustive indexing for performance, requiring the index-tables be
+distributed across the cluster nodes along with the data. The architecture of Cluster-TDB is shown in figure~\ref{fig:knowledge:cluster-tdb}.
+The query coordinators receive the input queries and are responsible for converting them to a canonical form, producing a 
+query plan, and controlling the query execution on the data nodes. Each data node hosts a number of virtual data nodes,
+which stores the data and the index tables. The virtual nodes can be migrated across the data nodes for dynamic load balancing. 
+Fault-tolerance is achieved with replication of the virtual nodes.
+%
+\index{HBASE} \index{Jena HBASE} \index{Apache Jena HBASE|see {Jena HBASE}} \index{NoSQL database}
+Following a different approach, Jena-HBASE~\citep{Khadilkar:2012} delegates the data management to HBASE NoSQL database that has 
+been discussed in chapter~\ref{chap:bigdata}. Each graph of a dataset is stored with its own storage layout in Jena-HBASE. Besides 
+the ``simple'' ($SOP$, $OPS$ and $PSO$) tables as in TDB, Jena-HBASE layout creates several other tables with different schemas
+to store RDF triples, each of which implements a tradeoff in terms of query performance and storage requirement. 
+
+\index{RDF triplet} \index{DFS}
+The distribution of the data over multiple servers not only improves data scalability, but computing performance as well, since
+different pieces of data for the same or different queries are retrieved from different independent nodes in a distributed system.
+Allocation of data partitions to the different nodes plays an important role in performance optimization. In chapter~\ref{chap:bigdata},
+we have seen that the data partitions are distributed in a round-robin fashion, or in a random order, in a distributed file system.
+This works well when data is scanned sequentially, e.g. a file is read form it's beginning to it's end. However, for accessing related 
+RDF triplets (e.g. all triplets with a certain predicate), this organization becomes inefficient. Therefore, various other partitioning 
+policies are deployed for storing RDF tuples to optimize different query operations. For example, hash partitioning, where data 
+is stored at a location based on a hash function of the attribute values, ``date = 2021'' can be used for fast retrieval of tuples 
+for the queries with completely specified attribute values, e.g. all documents published in 2021. Similarly, range-partitioning, 
+where data is distributed based on range over an attribute (e.g. all names starting with A -- C) is more suitable for range queries, 
+e.g. all authors, whose names start with A. SPARQL servers employ such strategies in their design, and create multiple redundant
+tables for the RDF data. 
+
+\index{RDF dataset} \index{RDF graph} \index{SHARD} \index{H$_2$RDF+}
+Answering SPARQL queries involve search for the matching triplet patterns in an RDF dataset, and joins to find the answer. 
+Machines generated SPARQL queries in semantic web applications are often more complex than what a human can compose, and may
+require a very large number of triplet patterns and joins. The matching triplets in the RDF graph are found in a sequence. Thus, 
+joining the triplets as and when they are found (rather than waiting for all search operations to be complete), and in stages,
+can result in significant speed-up in query answering. Systems like SHARD~\citep{Rohloff:2010} and H$_2$RDF+~\citep{Papailiou:2014} 
+implement such pipelined joins using iterative map-reduce algorithm (discussed in chapter~\ref{chap:bigdata}),
+where the variables in the triple patterns are bound to the RDF terms, and joined with the part-answers from the previously processed
+patterns, as shown in algorithm~\ref{algo:knowledge:sparql}.
+
+\begin{algorithm}[H]
+        \SetAlgoLined
+        \SetKwProg{proc}{procedure}{}{end}
+        \DontPrintSemicolon
+	\proc{Sparql($p_1, p_2, \dots, p_n$)}{
+		Map: assign variables for $p_1$\;
+		Reduce: remove duplicates\;
+		\For{each $p_i$ in $p_2, \dots, p_n$} {
+			Map: \\
+			1. Assign variables for $p_i$\;
+			2. Map past partial assignments, key on common variables\;
+			Reduce:\\ 
+			1. Join partial assignment on common variables\;
+			2. Remove Duplicates\;
+		} %EndFor
+		Map: Filter on SELECT variables\;
+		Reduce: Remove duplicates\;
+	} %EndProc
+        \caption{SPARQL query answering with Map-Reduce algorithm}
+        \label{algo:knowledge:sparql}
+\end{algorithm}
+
+\noindent
+Thus, we observe three levels of parallelism achieved in distributed SPARQL servers:
+\begin{itemize}
+	\item {\em Inter-query}: where more than one query are executed simultaneously. This results in increased system
+		throughput, and is achieved through distributing the data and processing on multiple nodes.
+	\item {\em Intra-query}: where the different subqueries are executed in parallel and in pipelined manner. This results
+		in faster query processing, and is implemented through mechanisms like map-reduce. 
+	\item {\em Intra-operation}: where a single operation is distributed over more than one node for concurrent execution,
+		for example searching for a triple pattern over distributed index tables. This results in faster query processing.
+\end{itemize}
+
+\subsection{Federated and Peer-to-Peer SPARQL query processing}
+
+\index{SPARQL!distributed query processing}
+\index{SPARQL!federated query processing}
+\index{RDF dataset} \index{RDF graph}
+We have so far considered the scenario when a SPARQL query operates on a single RDF dataset, though it may comprise multiple
+RDF graphs. The complete data is available to a SPARQL server, and index-tables for the complete data is built, albeit in a 
+distributed manner.  
+%
+\index{linked data}
+RDF datasets are often developed in independently in different administrative domains, e.g. in the Linked Data projects, where a 
+SPARQL query may need to consult more than one dataset to answer a query. In such cases, proprietary and data privacy issues may 
+inhibit all data to be copied on a SPARQL server and be indexed together. Further, since the datasets maintained by the different 
+agencies may keep on changing asynchronously, the data and the index-tables on the SPARQL server would need frequent updates.
+%
+Such situations demand a {\em federated query processing} multiple datasets, while preserving the autonomy of each. 
+
+The block diagram for a typical federated query processing architecture is shown in figure~\ref{fig:knowledge:federated-sparql}. The role
+of the mediator is to split a query up into several subqueries, to develop a query plan, to distribute the subqueries to the participating 
+SPARQL servers, and finally to integrate the partial results received from these servers to form the final result. In general, 
+each of the SPARQL servers can have distributed processing architecture as discussed in the previous section. In order to create
+a plan to distribute the subqueries across the servers, the mediator needs to have some prior knowledge about the datasets. 
+This can be either done by the servers exporting some statistical data, or by sampling the dataset. 
+
+\begin{figure}[!htpb]
+	\centerline{
+		\epsfig{figure=./Knowledge/federated-sparql.eps,width=0.6\linewidth}
+	}
+	\caption{Federated architecture for SPARQL query processing}
+	\label{fig:knowledge:federated-sparql}
+\end{figure}
+
+We shall use the RDF graphs shown in figure~\ref{fig:knowledge:rdf-dataset} to illustrate federated query processing, with the 
+assumption that the two graphs {\it mybiblio} and {\it myauthors} form two independent datasets, and are independently indexed 
+on two servers, forming two distinct data sources. Further, we shall use a SPARQL query example shown in 
+listing~\ref{list:knowledge:sparql-3} for the illustration. The query finds the title of the books written by an author,  whose 
+affiliation and name are specified. The query needs to be answered by consulting both the datasets.
+
+\begin{lstlisting} [caption=Example SPARQL query 3,label=list:knowledge:sparql-3]
+prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> 
+prefix sc:   <https://schema.org/> 
+prefix mb:   <http://mybiblio.org/biblio#>  
+
+    SELECT ?title 
+    WHERE {
+        ?book      dc:title        ?title ;
+                   rdf:type        mb:Book ;
+                   dc:contributor  ?author .
+        ?author    sc:affiliation  "IIT-Bhilai";
+                   sc:name         "Ratan Ghosh" .
+    }
+\end{lstlisting}
+
+\begin{figure}[!htpb]
+	\centerline{
+		\epsfig{figure=./Knowledge/bgp.eps,width=0.6\linewidth}
+	}
+	\caption{BGP for SPARQL query in listing~\ref{list:knowledge:sparql-3}}
+	\label{fig:knowledge:bgp}
+\end{figure}
+
+\noindent
+Figure~\ref{fig:knowledge:bgp} depicts the BGP for the query. It consists of five triple patterns:
+\begin{tabbing}
+	1234\=12345678\=1234567890\=12345878901234\=123456789012345678901234567890\=\kill
+	\> $p_1$ := \> ?book \> dc:title \> ?title   \\
+	\> $p_2$ := \> ?book  \> rdf:type \> mb:Book \\
+        \> $p_3$ := \> ?book  \> dc:contributor \> ?author \\
+        \> $p_4$ := \> ?author \> sc:affiliation \> "IIT:Bhilai" \\
+	\> $p_5$ := \> ?author \> sc:name \>  "Ratan Ghosh"  \\
+\end{tabbing}
+\noindent
+In this example, the patterns $p_1,p_2,p_3$ can be answered in {\it mybiblio} dataset, and the pattern $p_4,p_5$ can be answered
+in {\it myauthors} dataset. In general, the split in the data mat be arbitrary, and any subset of the triplet patterns in a query 
+can be answered in a participating datasets, and such subsets can be overlapping.  
+
+In order to formulate a subquery for a constituent server, the mediator need to have an \`{a}-priori knowledge of the schema
+of the RDF dataset for each of the servers. As a na\"{i}ve approach, each triple pattern could be sent to a server that can
+process it, and the results could be joined in the mediator. To achieve minimal communication between the mediator and the 
+servers, it is desirable to send the largest combinations of triple patterns that a server can process to that server. 
+It is done in the following way.
+
+\index{query path|textbf}
+\index{schema path|textbf}
+\begin{definition} [query path, schema path]
+	Let $\mathcal{G} = \langle V, E, L, s, o, l \rangle$ be a labeled RDF graph (or a BGP), where $V$ is a set of nodes, $E$ a set of 
+	edges, $L$ a set of edge-labels, $s,o : E \rightarrow V$ (subjects and objects of a predicate), and $l : E \rightarrow L$
+	(the label of an edge). \\
+	\noindent
+	A {\em query path} in the RDF graph is defined as a sequence of edges $(e_1, e_2, \dots, e_n)$ iff 
+	$\forall i = 0, 1, \dots, n-1: o(e_i) = s(e_{i+1})$.\\ 
+	\noindent
+	The sequence of labels $(l_1, l_2, \dots, l_n)$, where $l_i = l(e_i)$, is called a {\em schema path}. 
+\end{definition}
+
+\noindent
+A query path is an instance of a schema path.  Several paths may exist in a RDF graph for a given schema path. 
+
+\index{source index|textbf}
+\begin{definition} [source index]
+	Let $sp$ be a schema path in an RDF graph. A {\em source index} for $sp$ is a set of pairs $\langle s_i, n_i \rangle$, where 
+	$s_i$ is an RDF dataset, and it contains $n_i$ paths for schema path $sp$, when $n_i > 0$.
+\end{definition}
+
+\noindent
+If a query contains a schema path $sp$, the corresponding source index provides us with a list of RDF datasets $\{s_i\}$ that contain 
+some instances of the schema path. Thus, a subquery with the schema path may be forwarded to the corresponsing server get some 
+partial results. The cardinality of the path $n_i$ provides an estimate of the communication cost and the join cost, when the partial
+results are received and are joined with partial results obtained from other data sources.
+
+\index{source index hierarchy|textbf}
+\begin{definition} [source index hierarchy]
+	Let $sp =  (l_0, l_1, \dots, l_n)$ be a schema path of length $n$. A {\em source index hierarchy} $\mathcal{H}$ for $sp$ is 
+	an n-tuple $(SP_n, SP_{n-1}, \dots, SP_1)$
+	\begin{itemize}
+		\item $SP_n$ is a source index for $sp$.
+		\item $SP_i$ $(i \in \{n-1, n-2, \dots, 1\})$ denotes the set of all source indices for sub-paths of $sp$ with 
+			length $i$ that have at least one entry.
+	\end{itemize}
+\end{definition}
+
+\begin{figure}[!htpb]
+	\centerline{
+		\epsfig{figure=./Knowledge/si-hierarchy.eps,width=0.8\linewidth}
+	}
+	\caption{Source-Index Hierarchy for a sample schema-path}
+	\label{fig:knowledge:si-hierarchy}
+\end{figure}
+
+\index{query path} \index{schema path} \index{BGP}
+To illustrate the concept of source index hierarchy, let us consider a query path $(p_3,p_4,p_5)$ and the corresponding schema path 
+(dc:contributor, sc:affiliation, sc:name) in the BGP depicted in figure~\ref{fig:knowledge:bgp}. The source-index hierarchy for this 
+schema path is in figure~\ref{fig:knowledge:si-hierarchy}.  
+Intuitively, we see that a possible query plan in this example will be to send the sub-paths $(p_3)$ to the data source {\it mybiblio} 
+and $(p_4,p_5)$ to the data source {\it myauthors} respectively, and then to join the results. In general, we need to perform the
+following steps to get the results for a query path:
+\begin{enumerate}
+	\item Identify all possible sub-path combinations for a given query path, and the sources containing at least one result for 
+		each of these sub-paths. 
+	\item For each sub-path combination, forward the subqueries to the corresponding sources.
+	\item Join the partial results.
+\end{enumerate}
+
+\noindent
+A recursive algorithm for query planning and execution~\citep{Stuckenschmidt:2004} for a query path in a federated SPARQL system is 
+shown in algorithm~\ref{algo:knowledge:fed-sparql}, where the procedure {\bf answer} can be implemented in various ways, e.g. as in
+algorithm~\ref{algo:knowledge:sparql}. Further, a query, in general, contains several query paths. The results for all query paths need
+to be joined to get the final results for a query.
+
+\begin{algorithm}[!htbp]
+        \DontPrintSemicolon
+        \SetAlgoLined
+        \SetKwProg{proc}{procedure}{}{end}
+	\proc{FedSparql($qp, sp, \mathcal{H}$)}{
+		\# Query-path: $qp=(p_1,p_2,\dots,p_n)$ \\
+		\# Schema-path: $sp=(l_1, l_2, \dots, l_n)$ \\
+		\# Source-Index hierarchy: $\mathcal{H} = (SP_n, SP_{n-1}, \dots, SP_1)$ \\
+		result $\leftarrow \emptyset$ \;
+		\For {all sources $s_i$ in $SP_n$}{
+			\# answer the query and add the results to the result set \\
+			result $\leftarrow$ result $\cup$ {\bf answer}($s_i, qp$)\;
+		} % EndFor
+		\If{$n \geq 2$ }{
+			\For {all $i$ in $1, \dots, n-1$} {
+				\# split the query/schema-path into two pieces and answer them \\
+				$qp_1 = p_1, p_2, \dots, p_i$\;
+				$sp_1 = l_1, l_2, \dots, l_i$\;
+				$\mathcal{H}_1$ = Source-Index hierarchy for $sp_1$\;
+				result$_1$ = FedSparql($qp_1, sp_1, \mathcal{H}_1$)\;
+				$qp_2 = p_{i+1}, p_{i+2}, \dots, p_n$\;
+				$sp_2 = l_{i+1}, l_{i+2}, \dots, l_n$\;
+				$\mathcal{H}_2$ = Source-Index hierarchy for $sp_2$\;
+				result$_2$ = FedSparql($qp_2, sp_2, \mathcal{H}_2$)\;
+				\# join the part answers, and add joined answers to the result set \\
+				result $\leftarrow$ result $\cup$ join(result$_1$, result$_2$)\;
+			} %EndFor
+		} % EndIf
+		\Return result\;
+	} %EndProc
+        \caption{Federated SPARQL query answering}
+        \label{algo:knowledge:fed-sparql}
+\end{algorithm}
+
+\index{SPARQL!optimization}
+Algorithm~\ref{algo:knowledge:fed-sparql} is arguably not an optimal query processing solution, and calls for several optimizations.  
+We discuss a few commonly used techniques. It is easy to realize that the cardinality of the intermediate results determine the 
+communication and the processing overheads. Thus, early reduction of intermediate result size one of the most important goal for 
+a global query optimizer. A common approach to reduce the intermediate result size relies on the fact that a query triplet that 
+has more variables fetches more results. In our example, 
+it is obvious that a query ``?book mb:author ?author'' will fetch many more triplets from a bibliographic dataset than the query 
+where the variable ``?author'' is bound to a specific value, say ``ma:Author1''. Thus, it is prudent to bind the variables early 
+while executing the queries. For example, executing the subquery $(p_4,p_5)$ first, which will bind the variable ``?author'' to 
+a few resources, and subsequently reframing the query $(p_3)$ with a disjunction of those resources can optimize the performance 
+of the latter.
+
+\index{source index}
+Another approach is to rely on the statistical metadata (e.g. source index) available for the sources to determine which of the 
+queries may constrain the intermediate results more effectively. The order of join operations also determine the execution cost. 
+Obviously, it is useful to execute joins that produce small outputs first, so that the later joins can be computed more efficiently. 
+Determining optimal order of joins also depends on the estimates of intermediate result sizes, and hence is based on the available 
+statistical metadata for the data stores.
+Appropriate cost models for computation, communication and latencies in the networked system need to be developed, and a query optimizer 
+needs to explore and evaluate the cost of all possible query plans to arrive at an optimal solution. Some of these goals are pursued 
+internally in the servers also for optimizing local query optimization; the cost models within a server network can be quite different 
+from the global network. 
+
+\index{mediated query processing} \index{GraphDB}
+In a federated SPARQL system, the servers are aware of the fact that they are a part of the federation and complies with the requirements
+of the federation. In particular, they support SPARQL query language and make statistical metadata about their collection available to
+the mediator. In contrast, there are {\em mediated query processing} architecture, where the data sources may not comply to these 
+requirements.  If a server (e.g. one based on GraphDB) supports some different query language, a wrapper need to be built for query 
+conversion. 
+\index{peer-to-peer query processing} 
+In yet another variation of SPARQL systems use a {\em peer-to-peer} architecture, where there is no mediator. In these systems, any of 
+the servers can assume the role of the mediator and distribute the sub-queries to others. The existence of the other servers may not be 
+\`{a}-priori known to a server in these systems, and may be dynamically discovered as in an agent-based system.
+%
+SPARQL query processing over distributed datasets continues to be a challenging research problem. Interested readers may refer 
+to~\citep{Hose:2011,Wylot:2018} for theoretical foundations and state-of-the-art on the subject.

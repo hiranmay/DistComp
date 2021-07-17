@@ -1,0 +1,127 @@
+\section{Linked Data}
+
+\index{linked data}
+{\em Linked Data} refers to publishing large volume of semi-structured data on the web with underlying RDF/OWL representation. 
+They can be either be private (as in a Corporate domain), or be ``open'', when it can be freely accessed, contributed and 
+distributed by anybody in the world. 
+%
+% Linked data is based on four guiding principles~\citep{Berners-Lee:2009}:
+% \begin{enumerate}
+% 	\item Use IRIs as names for things
+% 	\item Use HTTP IRIs so that people can look up those names.
+% 	\item When someone looks up a URI, provide useful information, using the standard representations.
+%     	\item Include links to other URIs. so that they can discover more things.
+% \end{enumerate}
+% 
+% \noindent
+There have been many open linked data projects around the world. We discuss two illustrative ones below.
+
+\subsection{Friend of a Friend}
+
+\index{Friend of a Friend}
+\index{ontology}
+{\em Friend of a Friend} (FoaF)~\citep{Graves:2007} has been a pioneering linked data project that recursively links the 
+``friends'' of a person (together with other pieces of information that may be available), and has been regarded as the 
+standard vocabulary for representation of social networks. FoaF defines two sets of vocabularies:
+% ~\footnote{FoaF ontology (the complete set of FoaF vocabulary and their relations) is available on~\url{http://xmlns.com/foaf/spec/}.}:
+\index{class} \index{property}
+\begin{enumerate}
+	\item {\em Core vocabulary}: that describe characteristics of people and social groups. They can be used to describe basic 
+		information about people and social groups in various contexts. Examples of core vocabulary include
+		\begin{itemize}
+			\item Classes like Person, Organization and Document, Image, etc., and
+			\item Properties like name, title (Mr., Ms., etc.), img (image of), made (with maker as the inverse
+				relation), etc.
+		\end{itemize}
+	\index{social web vocabulary}
+	\item {\em Social Web vocabulary}: includes the terms used for describing web-based social network activities. Examples of social 
+		web vocabulary include
+		\begin{itemize}
+			\item Classes like OnlineAccount (provision of some form of online service) and PersonalProfileDocument
+				(that use RDF to describe properties of the maker of the document).
+			\item Properties like mbox, homepage, publications, etc.
+		\end{itemize}
+\end{enumerate}
+
+\index{RDF graph}
+The basic idea behind FoaF is quite simple. People are encouraged to publish information as RDF graphs using FoaF vocabulary. 
+A FoaF document gets linked to another through ``knows'' or ``seeAlso'' links, forming a machine-interpretable version of the 
+distributed knowledge.  
+%
+It is possible to reason over FoaF documents. For example, two persons sharing some common properties (e.g. a common workspace,
+identified with the same IRI) can be inferred to be colleagues. Listing~\ref{list:knowledge:foaf} depicts an example FoaF document 
+(in Turtle notation) that represents personal profile for one of the authors of this book.
+
+\begin{lstlisting} [caption=Examples of FOAF,label=list:knowledge:foaf]
+@prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix foaf:   <http://xmlns.com/foaf/0.1/> .
+@prefix mb:     <http://biblio.org/mybiblio#> .
+
+<>  # Blank IRI <> means this resource.
+    rdf:type          foaf:PersonalProfileDocument ;
+    foaf:title        "Hiranmay Ghosh'es FoaF page" ;
+    foaf:maker        <#HG> .
+<#HG> 
+   rdfs:subClassOf    foaf:Person ; 
+   foaf:name          "Hiranmay Ghosh" ;
+   foaf:mbox          <mailto:hiranmay@ieee.org>;
+   foaf:homepage      <https://sites.google.com/view/hiranmay> ;
+   foaf:publication   mb:Book-1 ;
+   foaf:knows         <http://.../rkg-personal-profile> ;
+   rdfs:seeAlso       <http://.../another-foaf-doc> .
+\end{lstlisting}
+
+\subsection{DBpedia}
+
+\index{DBpedia|textbf} \index{RDF triplet}
+Wikipedia is one of the largest crowd-sourced effort to create an online encyclopedia, and is a popular knowledge resource. The 
+``infobox'' entries on a Wikipedia page contain semi-structured data about the entry. {\em DBpedia} parses this data source to
+build a large-scale online knowledge resource represented as RDF triplets. It contains information about more than 2.6 million
+entities collected from articles in more than 110 languages and 274 million RDF triplets~\citep{Lehman:2015}.
+
+\begin{figure}[!htbp]
+	\centerline{
+		\epsfig{figure=./Knowledge/dbpedia.eps,width=0.8\linewidth}
+	}
+	\caption{DBpedia Architecture (\basedon{~\citep{Lehman:2015})}}
+	\label{fig:knowledge:dbpedia}
+\end{figure}
+
+\index{linked data interface} \index{SPARQL endpoint}
+\index{TDB} \index{sparql}
+A simplified architecture of DBpedia is shown in figure~\ref{fig:knowledge:dbpedia}. It receives it's inputs from Wikipedia in two
+forms: (a) Wikipedia SQL dumps that are produced on a periodic basis, and (b) live updates (additions and deletions) provided by 
+Wikipedia through it's API. Both the inputs are processed through a parser and an extractor. The extracted output is stored as 
+DBpedia dump in form of RDF triplets, and in a triple store database. DBpedia provides two interfaces to access the data: 
+(a) a {\em linked-data interface} that provides RDF representation to semantic web agents and a human-readable HTML interface for 
+web-browsers, and (b) a {\em SPARQL endpoint} useful to query the RDF dump. We shall explain triple store database and SPARQL 
+query processing in the next section.
+
+\begin{lstlisting} [caption=Sample entries from a Wikipedia Infobox,label=list:knowledge:wiki-infobox]
+{{Infobox country
+    | conventional_long_name   = Republic of India
+    | common_name              = India
+    | image_flag               = Flag of India.svg
+    | capital                  = [[New Delhi]]
+    | coordinates              = {{Coord|28|36|50|N|77|12|30|E}}
+    | official_languages       = 
+    {{hlist
+        |[[Hindi]]
+        |[[English]]
+    }}
+}}
+\end{lstlisting}
+
+The representation for a few selected entries in the infobox of the Wikipedia article on India is illustrated in 
+listing~\ref{list:knowledge:wiki-infobox}. The parser parses the infobox to identify the various properties and 
+their types contained in it. Once the resources have been extracted, RDF statements are created about the resource
+concerned. The RDF statements interconnects resources internal to Wikipedia as well as those defined elsewhere.
+
+\index{ontology}
+There can be several types of property values in Wikipedia infoboxes, for example concepts (other entities defined in 
+Wikipedia), and literals in form of strings, images, geo-tags, and so on. DBpedia extraction module incorporates specialized 
+extractors for the different properties. Further, Wikipedia is developed by crowd-sourcing without any restrictions 
+on their contents. Though some templates for infoboxes are recommended, there is no strict imposition of any schema. Therefore,
+the extractors need to deploy several heuristics. Moreover, DBpedia defines an ontology, which identifies 
+the synonyms and defines property restrictions for correct extraction of the resources.
