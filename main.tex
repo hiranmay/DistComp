@@ -1,0 +1,69 @@
+%% Run LaTeX on this file several times to get Table of Contents,
+
+%% Run LaTeX on this file several times to get Table of Contents,
+
+%% Run LaTeX on this file several times to get Table of Contents,
+%% cross-references, and citations.
+
+\documentclass[11pt]{book}
+\usepackage{Wiley-AuthoringTemplate}
+\usepackage{chapterbib}
+\usepackage[sectionbib,authoryear]{natbib}% for name-date citation comment the below line
+%\usepackage[sectionbib,numbers]{natbib}% for numbered citation comment the above line
+
+%%********************************************************************%%
+%%       The below macro controls the numbering of section heads      %%
+%% 0= no section numbers, 1= section, 2= subsection, 3= subsubsection %%
+\setcounter{secnumdepth}{3}
+%%********************************************************************%%
+
+%%**********************************************************************%%
+%%  The below macro controls the number of section heads displayed in   %%
+%%			Table of Contents?				%%
+%% 0= chapter, 1= section, 2= subsection, 3= subsubsection titles.	%%
+\setcounter{tocdepth}{2}
+%%**********************************************************************%%
+
+% --- Include specific packages and newcommands that we need --- [HG]
+\include{packages}
+\include{newcommands}
+
+%%\includeonly{fm}
+
+\makeindex% for index generation
+
+\begin{document}
+
+\frontmatter
+\include{fm}
+
+\mainmatter
+\include{ch01}
+\include{ch02} 
+\include{ch03} 
+\include{ch04}
+\include{ch05}
+\include{ch06}
+\include{ch07}
+\include{ch08}
+\include{ch09}
+\include{ch10}
+\include{ch11}
+\include{ch12}
+\include{ch13}
+\include{ch14}
+\include{ch15}
+\include{ch16}
+\include{ch17}
+
+\backmatter
+% \appendix
+% \include{ap01}
+% \include{ap02}
+% \include{ap03}
+
+\printindex
+
+\end{document}
+%% Run LaTeX on this file several times to get Table of Contents,
+
