@@ -1,0 +1,23 @@
+\section*{Exercises}
+
+\begin{enumerate}
+	\item Is it possible to keep the nonce value alone (and not the computed hash value) in the hashtag of a 
+		blockchain?
+	\item What will be the implications, if individual records (rather than blocks) were chained like in a Blockchain
+		to create a distributed ledger?
+	\item Analyze the distributed consensus process described in section~\ref{sec:ledger:nakamoto-consensus}. Relate
+		the various aspects of the process with the three layers and components of the DLT system framework.
+	\item Assume that a new transaction (10) is included in the tangle shown in figure~\ref{fig:ledger:tangle} and
+		that it approves nodes 6 and 7. What will be the new tips of the network? Assuming that the weight of each
+		node is 1, what will be the cumulative weight for the node 3 in the network after node 10 is added?
+	\item Review the code for smart contract for sealed bid first price auctions available at 
+		\url{https://vyper.readthedocs.io/en/stable/vyper-by-example.html}. 
+		Adapt the code for creating a smart contact for sealed bid seconf price (Vickrey) auction~\footnote{A description
+		of Vickrey auction is available at 
+		\url{https://saylordotorg.github.io/text\_introduction-to-economic-analysis/s21-04-vickrey-auction.html}.}.
+		Try it out on Ethereum (see \url{https://ethereum.org/en/developers/learning-tools/}).
+	\item Consider the distributed ledger shown in figure~\ref{fig:ledger:tangle} in form of a tangle. Assume that a new 
+		transaction (11) is addded to the ledger, and it approves the transactions 6 and 9. What will be the new tips in 
+		the ledger? What will be the cumulative weight of node 2, assuming the individual weights of each of the nodes to 
+		be 1?
+\end{enumerate}

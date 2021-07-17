@@ -1,0 +1,326 @@
+\section{Other Techniques for Distributed Consensus}
+
+We have discussed the Nakamoto distributed consensus algorithm based on PoW in the previous section. The protocol is used
+in a very large majority of applications~\citep{Ferdous:2021}, including Bitcoin. Nevertheless, the technology has it's own 
+limitations and there has been several attempts to improve on it or substitute it for specific applications. In this section, 
+we review the alternative data-structures and algorithms for distributed consensus.
+
+
+\subsection{BFT and PoW}
+\index{BFT} \index{PoW}
+
+% \hgcomment{Ratan, please review the section carefully for correctness.}
+
+We have discussed {\em Byzantine Fault Tolerance} (BFT) in chapter~\ref{chap:agreement}. Like PoW, BFT also achieves integrity 
+of data in distributed systems, despite faulty or malicious nodes. The major differences in the two approaches are as 
+follows~\citep{Vukolic:2016}.
+
+\index{gossip}
+BFT relies on synchronous communication between the agents for seeking votes. Thus, it needs to assume a permissioned system 
+comprising agents with known identities and little churn. On the contrary, PoW based consensus works for open systems, where 
+the information is asynchronously percolated in the network through gossip, and it is sufficient for an agent to communicate
+to a few neighbors (at least one) in the network.
+%
+Further, the synchronous message communication in BFT results in an overhead of $O(n^2)$ ($O(n^3)$ where protocols require 
+acknowledgement for votes), which restricts it's scalability (tested with $\leq$ 20 nodes). In
+contrast, asynchronous operations in blockchain provide excellent scalability (in order of thousands of nodes). 
+%
+Further, while BFT can tolerate up to 1/3rd of the total nodes to be corrupt, collusion of more than half of the available computing 
+power is required to defeat the PoW-based distributed consensus mechanism. 
+ 
+Where BFT scores over PoW is in it's throughput, latency and energy efficiency. PoW consumes lots of computing power (and electricity)
+and hence is extremely slow and wasteful. In comparison, BFT can achieve excellent throughput (in order of several thousand transactions 
+per second) and achieves latency comparable to that of the network.
+ 
+Thus, we find that the Nakamoto protocol is more suitable for an open permissionless network environment with slow transaction rates. 
+BFT protocol is more suitable for use in small permissioned networks requiring a higher throughput. Some variations of Byzantine fault 
+tolerance (BFT) algorithms, e.g.~\citep{Castro:2002}, are used in small and private networks. We review some alternative ``proofs'' 
+that attempts to replace the expensive PoW algorithm in the next section.
+
+\subsection{Alternative Proofs}
+
+\index{PoW!memory-bound algorithms}
+\index{incentive-based proofs}
+The PoW algorithm proposed by Nakamoto is compute-bound, a barrier than can be overcome with deployment of advanced processor
+technologies. For instance, quantum computer needs $O(\sqrt(N))$ operations to find a colliding data value, when $N$ denotes 
+the size of the data space~\citep{Brassard:1997}. This has motivated research on quantum computation resistant hashing 
+algorithms~\citep{Fernandez-Carames:2020}. One approach to overcome the problem is to use memory-bound PoW algorithms, e.g. 
+Dagger-Hashimoto algorithm~\citep{Buterin:2013}, where the memory access rate limits the performance. Though it can be argued 
+that the improvement in memory technology can break this barrier too, it may take a long time considering the current technological '
+trends. 
+%
+\index{PoS|textbf} 
+\index{proof of stake|see {PoS}}
+As an alternative to PoW, Etehereum uses {\em proof-of-stake} (PoS) algorithm,
+% ~\footnote{see Proof-of-Stake (POS): \url{https://ethereum.org/en/developers/docs/consensus-mechanisms/pos/}.}, 
+where the honesty of an agent is ensured with the stake it has in contributing a block. The PoS algorithm is better energy efficient
+than PoW, since it does not require an agent to solve a puzzle, but rather to stake a part of his assets for block mining. The average 
+time to generate a block in Ethereum is about 10 second, in contrast with 10 minutes in Bitcoin, which uses PoW. Further, since it does 
+not require heavy investment in computing resources there is a lower barriers to entry, and reduced concentration of mining power. 
+ 
+\index{BFT}
+\index{PoET|textbf} \index{proof of elapsed time|see {PoET}}
+\index{incentive-less proofs}
+The PoW and PoS algorithms are incentive-based and are suitable for cryptocurrency applications. In applications divorced
+from cryptocurrencies, there is no financial motivation for the agents to invest in producing a proof. Quite a few incentive-less 
+consensus algorithms have been developed for such applications. For example, Hyperledger Sawtooth and some other protocols use 
+a proof of elapsed time (PoET),
+% ~\footnote{See PoET 1.0 specifications:
+% \url{https://sawtooth.hyperledger.org/docs/core/releases/latest/architecture/poet.html}.}, 
+where an agent needs to wait for a minimum
+time to create a block. The algorithm is based on a trusted hardware environment (Intel SGX) and can be suitable for permissioned 
+distributed ledger systems. The duration of the elapsed time can be adjusted to balance between the application throughput needs and 
+the consistency of the ledger.
+
+\section{Non-linear Datastructures}
+
+In applications, where there are no incentive for block mining, a pragmatic approach for such applications is to dispense with the 
+blocks and allow the agents to append the transactions directly to the ledger. To avoid the performance bottleneck caused by the 
+linear stucture of a ledger (as in blockchain), which becomes more severe while operating at the transactions level), these 
+protocols use non-linear datastructures where the ledgers can grow in parallel with periodic synchronization. We review two distinct 
+protocols based on this approach in this section. These protocols achieve much higher throughput than blockchain, in order of 100,000 
+transactions per second.
+
+\subsection{Tangle}
+\index{tangle}
+\index{DAG} \index{directed acyclic graph|see {DAG}}
+Tangle~\citep{Popov:2018} is a data-structure designed for distributed ledger of IOTA, cryptocurrency to support micro-payment in IoT 
+based systems. The transactions in tangle are organized as a connected {\em Directed Acyclic Graph} (DAG),
+% ~\footnote{A directed acyclic 
+% graph (DAG) is a directed graph, where there are no cycles, i.e. no directed paths from a node to itself. A connected DAG means that 
+% it is possible to visit any node in the graph from any other node, ignoring the directivity of the edges.}, 
+a copy of which is maintained
+by every participating agent in the system.
+%
+A tangle is initialized with a genesis transaction, where all coins (or assets) are generated and assigned to the different agents
+in the system. 
+For all transactions, the initiator agent is required to {\em approve} at least two existing transactions in order to place a 
+transaction in the graph, with the obvious exception that the very first transaction has only the genesis record to approve. 
+While approving a transaction, an agent checks if the transaction is consistent with the history in the tangle, and creates 
+appropriate hashes. The work done by the agents in approving the transactions contribute to the network's security, and determines 
+the {\em weight} of a transaction.  An agent is motivated to do an honest ``work'', because it runs the risk that other agents 
+will not approve it's transaction otherwise.
+
+Figure~\ref{fig:ledger:tangle} shows the structure of a tangle with a few transactions. In the figure, a node represents 
+a transaction and an edge represents an approval. The transaction numbers are shown in their chronological order. Each transaction 
+(except 0 and 1) approves exactly two existing transactions. If there is a direct link from a transaction $u$ to a transaction $v$, 
+$v$ is {\em directly approved} by $u$. If there are a set of transactions $\{ z_1, z_2, \dots, z_n \}$ and links 
+$z_n \leftarrow u, z_{n-1} \leftarrow z_n, \dots, v \leftarrow z_1$, $v$ is {\em indirectly approved} by $u$. 
+%
+In the figure, transaction 7 directly approves transactions 3 and 5, and indirectly approves transactions 0, 1 and 2. It does not 
+approve (either directly or indirectly) transactions 4 and 6. Transaction 0, the {\em genesis node}, is approved by all other 
+transactions, either directly or indirectly. 
+%
+At any given point of time, there are a few transactions in the network that are yet to be approved, for example transactions 6, 
+9 and 10 in the figure. An unapproved transaction is called a {\em tip} of the graph.
+
+\index{tangle|textbf}
+\begin{definition} [tangle]
+	A {\em tangle} is a connected directed acyclic finite graph $G = \langle V,E \rangle$ where each vertex $v \in V$ represents a 
+	transaction and $(v \leftarrow u) \in E$ represents an approval. The following properties hold good for the graph: 
+	\begin{enumerate}
+		\item $\exists v_0 \in V$, where $v_0$ is the genesis transaction.
+		\item $deg_{out} (v_0) = 0$ 
+		\item $\forall v \in V \setminus \{ v_0 \}, deg_{out} (v) \geq 1$ 
+		\item $\forall u,v \in V$ if $\exists (v \leftarrow u)  \in E$, then $u$ represents a transaction prior to $v$  and 
+			that $u$ has ``approved'' $v$, and
+		\item $\forall v \in V \setminus \{ v_0 \}$, either  $v_0 \leftarrow v$, or 
+			$\exists \{z_1, \dots, z_n\}$ such that $z_n \leftarrow v, z_{n-1} \leftarrow z_n, \dots, v_0 \leftarrow z_1$ 
+	\end{enumerate}
+\end{definition}
+
+The {\em status} of the tangle at time $t$ is given by $G(t) = \langle V(t), E(t) \rangle$, where the following properties hold good.
+\begin{enumerate}
+	\item At time $t = 0$, $G(0) = \langle \{v_0\}, \emptyset \rangle$.
+	\item $\forall t_1,t_2 \geq 0$, if $t_1 > t_2$, then $V(t_1 ) \subseteq V(t_2)$ and $E(t_1) \subseteq E(t_2)$.
+\end{enumerate}
+
+% A {\em tip} of a tangle is a node $v \in V$, for which $deg_{in}(v) = 0$.
+
+\begin{figure} [!htbp]
+	\centerline{
+		\epsfig{figure=Ledger/tangle.eps, width=0.8\linewidth}
+	}
+	\caption{The structure of a tangle}
+	\label{fig:ledger:tangle}
+\end{figure}
+ 
+\index{cumulative weight}
+A transaction that is approved in tangle is trusted by the participants. The degree of trust increases with the number of direct
+and indirect approvals. Formally, the degree of trust is determined by the {\em cumulative weight} of the transactions that is 
+defined as 
+
+\begin{equation}
+	cw(v) = w(v) + \sum_{u \in \text{approver}(v)} w(u)
+\end{equation}
+\noindent
+where $w(x)$ denotes the weight of a transaction $x$ and  approver$(v)$ represents the set of all transactions that approves 
+transaction $v$ directly or indirectly. For example, assuming the weight for each of the transactions to be 1, the cumulative 
+weight of transaction 5 is 5.
+
+Thus, to build trust in the transactions, it is necessary that (a) each transaction is approved by many later transactions, and (b) 
+there are as few unapproved nodes at any given point of time as possible. Each transaction is created as a tip (not approved by any 
+other transaction) and remains so until the time certain existing transactions approve it. Ideally, an agent creating a new transaction 
+should approve the current tips of the DAG. A random walk algorithm in the DAG from a random node towards the tips ensures that an
+agent selects a tip in the tangle. 
+%
+Because of network delays, an agent may not see the current tips, but the tips that have been there at a previous point of time.
+It can be proved that the network remains stable when this strategy is followed by all the agents, i.e. every transaction gets 
+eventually approved and the number of tips in the DAG fluctuates around a value given by
+\begin{equation}
+	\hat{L}^{(k)} = \frac{k \lambda h}{k - 1}
+\end{equation}
+\noindent
+where each transaction approves $k$ transactions, the transactions are assumed to be generated as a stochastic process with an arrival 
+rate of $\lambda$, and the network delay is $h$, i.e. a transaction attached to the tangle at time $t$ becomes visible to the 
+network at time $t + h$. 
+%
+In a {\em low load regime}, when the transaction rate and network latencies are small ($\lambda h$ is small), few tips can be expected
+in the network at any given point of time. On the contrary, in a {\em high load regime} ($\lambda h$ is large). there will be many tips.
+ 
+\index{double spend attack}
+The consensus algorithm is also effective against forks in the tangle, which can be caused by statistical behavior of the system or 
+dishonest behavior by an agent (double-spend attack). A fork results in a split in the tangle, with two branches becoming disjoint 
+after a certain point of time. The random walk algorithm prefers following a ``heavier'' branch (having transactions with more 
+cumulative weights) in the network, which is likely to include honest transactions, when there is a double-spend attack. It can be 
+shown that the optimal strategy for self-interested (not dishonest) agents is to follow the protocol, thereby ensuring cooperation 
+with the network~\cite{Popov:2019}. 
+
+\hgcomment{What are the significance of height, depth and score? Do we discuss them?}
+
+\subsection{Hashgraph}
+
+\index{hashgraph} \index{gossip}
+Hashgraph consensus algorithm~\citep{Baird:2016:1} is based on history of gossip protocol. At initiation, each of the participating 
+agents creates an event. As the time progresses, a member chooses another member at random, and they exchange information about all of 
+the events that they know. The information exchange is optimized by first finding out what the other agent already knows, 
+and then providing the unknown information only. The agents communicate with gossip protocol; whenever an agent becomes aware of 
+a new event, it spreads the information through the community until every agent becomes aware of it. 
+
+\begin{figure}[!htbp]
+	\subfigure [] {
+		\begin{minipage}{0.45\linewidth}
+			\centerline{
+				\epsfig{figure=Ledger/hashgraph.eps, width=0.9\linewidth}
+			}
+		\end{minipage}
+	}
+	\subfigure [] {
+		\begin{minipage}{0.45\linewidth}
+			\centerline{
+				\epsfig{figure=Ledger/hashgraph-event.eps, width=0.8\linewidth}
+			}
+		\end{minipage}
+	}
+	\caption{(a) Structure of a hashgraph, and (b) structure of an event in a hashgraph}
+	\label{fig:ledger:hashgraph}
+\end{figure}
+
+\index{gossip!history of}
+The history of gossip can be depicted as a graph as shown in figure~\ref{fig:ledger:hashgraph}(a). In the figure, the system
+is participated by four agents, designated by $A$, $B$, $C$ and $D$ respectively. The vertical lines represent the timeline for each, 
+with time increasing upwards. The nodes in the graph marked $a_0, \dots, d_0$ represent the initial events.  Other nodes, 
+$a_1, b_1, \dots$ represent events acknowledging an information exchange. For example, $d_2$ represent a mutual information exchange 
+($B \xrightarrow{b_1} D, D \xrightarrow{d_1} B$) between agents $B$ and $D$, initiated by agent $B$, and acknowledged by agent $D$.
+%
+While in gossip protocol, only the information exchanged and not the history of gossip is preserved, the ledger in hashgraph 
+consists of the graph itself for traceability of the information exchange. 
+
+The structure of an event in a hashgraph is shown in figure~\ref{fig:ledger:hashgraph}(b). It contains a time-stamp for the 
+information exchange and the hash of the two reference events, e.g. event $d_2$ contains the hash of events $b_1$ and $d_1$. 
+Further, an agent can optionally include one or more new transactions signed by itself (payload) that it wants to be included 
+in the ledger. Use of cryptographic hash and signature makes the older parts of a hashgraph tamper-resistant. 
+
+If two agents have the same version of the hashgraph, then they can arrive at identical order of the events, which is a 
+deterministic function of that version of the hashgraph. However, at any given point of time, the older events will be known 
+to all the participating agents, though the most recent events may not yet be known. For example, in the current state of 
+the hashgraph shown in figure~\ref{fig:ledger:hashgraph}(a), the events $b_1$ and $d_1$ are known to all the agents, 
+though agents $B$ and $C$ is not aware of the event $a_1$. Thus, the ordering of the events will be identical for
+the part of the hashgraph that has propagated to all agents. The ordering of the recent events will be limited to the events
+known to an agent, which will be different for the different agents, but not in contradiction with each other.
+
+\index{hashgraph!consistency}
+\begin{definition} [consistency of hashgraphs]
+	Hashgraphs of agents $A$ and $B$ are consistent, if for any event $x$, if both hashgraphs contain $x$, then they both 
+	contain the same set of ancestors for $x$, with the same subgraph for those ancestors.
+\end{definition}
+
+As in other distributed ledgers, there can be a fork in a hashgraph because of a double-spend attack. A dishonest agent creates
+two events $x$ and $y$, none of which is an ancestor to the other. Each of the events has a common ancestor, say $z$, and attempts 
+to transact the same coin (asset). In such cases, some of agents could accept the event $x$ and some could accept $y$.
+%
+For achieving Byzantine fault tolerance, there need to be a consensus in the network to accept one of the events and not the other. 
+The consensus in hashgraph is achieved with a {\em virtual voting} algorithm. Since each participating agent stores a copy of the 
+hashgraph, an election conducted by an agent does not require communicating to other agents seeking votes as in BFT algorithm, but 
+references to it's own hashgraph only. Before we proceed to describe the virtual election algorithms, we define a few concepts of 
+hashgraph.
+
+\begin{definition} [see]
+	Normally, an event $x$ can {\em see} an event $y$ if $y$ is an ancestor of event $x$. If some event $w$ has has both $x$ 
+	and $y$, but neither of $x$ and $y$ is an ancestor of the other (double-spend attack), then by definition, $w$ does not see 
+	either of the two events. 
+\end{definition}
+
+\begin{definition} [strongly see]
+	If there are $n$ participating agents, an event $x$ can {\em strongly see} an event $y$, if $x$ can see at least $\frac{2}{3}n$ 
+	events by different agents, each of which can see $y$. 
+\end{definition}
+
+In figure~\ref{fig:ledger:hashgraph}(a), event $d_3$ can see $b_1$. Since $n=4$ in the example, an event $x$ needs to see at least 
+$3$ events, each of which sees $y$ in order that $x$ can strongly see $y$. In the example, $d_4$ sees $a_1$, $b_2$ and $d_3$, each of 
+which sees $b_0$. Thus, $d_4$ strongly sees $b_0$. The reader is encouraged to verify that $d_4$ can strongly see $c_0$ and $d_0$
+also, but not $a_0$.  
+ 
+An agent, after creating an event, executes three algorithms. The first algorithm defines the {\em rounds} in a hashgraph and the
+{\em witnesses} in every round. 
+
+\begin{definition} [round number]
+	The {\em round number} of the initial events in the hashgraph is defined as 1. It is incremented by 1, when an event that can 
+	strongly see events created by at least $\frac{2}{3}n$ agents in the previous round. 
+\end{definition}
+
+\index{witness!in hashgraph}
+\begin{definition} [witness]
+	The first event (for each agent) in a round is called a {\em witness}. The initial events, which do not have any parents (first
+	events of round 1), are also called the witnesses. 
+\end{definition}
+
+\begin{figure}[!htbp]
+	\centerline{
+		\epsfig{figure=Ledger/tr2-hashgraph.eps, width=0.4\linewidth}
+	}
+	\caption{An extended hashgraph (\reproducedp{~\citep{Baird:2016:2}})}
+	\label{fig:ledger:tr2-hashgraph}
+\end{figure}
+
+\noindent
+We extend the hashgraph (and change the labels) as in figure~\ref{fig:ledger:tr2-hashgraph} to illustrate these concepts. 
+In the figure, the rounds are annotated. The labelled events are are the witnesses in each round. Each of these events can 
+strongly see events created by at least 3 agents in the previous rounds.
+ 
+The second algorithm decides the fame of the witnesses through virtual voting. The votes are cast by the witness events only.
+
+\index{famous witness!in hashgraph}
+\begin{definition}[famous witness]
+	A witness is {\em famous} if it is seen from witnesses of at least $\frac{2}{3}n$ agents in the next round.
+\end{definition}
+
+\noindent
+For example, in the figure, all of the witnesses A3, B3, C3 and D3 can see B2. Hence, B2 is a famous witness. Event C2 is not seen by 
+A3, B3 and D3; it is not famous. The reader is encouraged to verify that the witnesses A2 and D2 are also famous.
+
+Once the famous witnesses are discovered, the third algorithm defines the order of the events. An event $x$ receives a round
+$r$ if that is the lowest numbered round in which at least half the famous witnesses could see it. For example, the event just above
+A1 in figure~\ref{fig:ledger:tr2-hashgraph} is seen by 2 famous events (A2 and D2) out of 3, and hence receives round 2. If an 
+event $x$ receives round $r_1$ and an event receives round $r_2$, then $x$ precedes $y$ if $r_1 < r_2$, and vice-versa. If two events 
+$x$ and $y$ receives the same round, they are ordered based on the median of the timestamps of the events where each famous witnesses’s 
+creator first had an event that saw $x$ and $y$ respectively.
+
+With this consensus algorithm, it can be proved that (a) hashgraphs maintained by all the agents will be consistent, and (b) if event 
+$x$ is a fork with event $y$ and $x$ is strongly seen by event $w$ in hashgraph of agent $A$, then $y$ will not be strongly seen by any 
+event in any hashgraph of agent $B$, if the two hashgraphs are consistent. This ensures Byzantine fault tolerance. Note that the voting 
+algorithms are based on $\frac{2}{3}$rd majority and hence it takes more than $\frac{1}{3}$rd agents to be dishonest to corrupt the system.
+
+% \subsection{Summary}
+
+% Taxonomy~\citep{Garay:2020}

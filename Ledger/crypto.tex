@@ -1,0 +1,100 @@
+\section{Cryptographic Techniques}
+
+This section provides a concise review of the core cryptographic techniques that are essential to build distributed 
+ledger systems.  For more details of cryptographic methods, a reader is recommended to consult any standard book on cryptography.
+
+% \subsection{Hashing}
+
+\index{hashing|textbf}
+\begin{definition} [hashing]
+	{\em Hashing} is defined as an one-way mapping from a data-space $x$ to a hash-space $y$, $y = H(x)$. The reverse mapping
+	$x = H^{-1}(y)$ does not exist.
+\end{definition}
+
+\index{hash function}
+% A simple hash function for a set of data, each 1024 bit long, could be to retain its last sixteen bits, i.e. $y = H(x) = x \% (2^{256})$, 
+% where `\%' stands for modulo operation. Note that it is possible to compute $y$ given any $x$, but not vice-versa. However, a hash function 
+% in this form is not particularly useful for cryptography. 
+A cryptographic hash function needs to satisfy a few properties, namely
+collision resistance, data hiding and puzzle friendliness. 
+
+\index{collision resistance|textbf}
+\begin{definition} [collision resistance]
+	A hash function $H()$ is said to be {\em collision resistant} if it is infeasible to find two values, 
+	$x$ and $y$, such that $x \neq y$ and $H(x)= H(y)$.
+\end{definition}
+
+If the hash-space is smaller than the data-space, collision is bound to happen. A hash function need to be so designed that it is 
+not possible to make an intelligent guess about colliding data values. In other words, given a data value, $x_1$, a colliding data 
+$x_2 \neq x_1$ can be found by trial and error only; If the hash space is of size $2^{256}$, it will take $2^{128}$ attempts.
+% ~\footnote
+% {A quantum computer needs $O(\sqrt(N))$ operations to find a colliding data value, when $N$ denotes the size of the data 
+% space~\citep{Brassard:1997}, prompting research on quantum computation resistant hashing algorithms~\citep{Fernandez-Carames:2020}.}. 
+To realize the enormity of the number, assume that we can compute $2^{20}$ ($\approx$ one million) hashes per second, when on the 
+average, finding an instance of colliding data will take $2^{108}$ seconds, which is more than $10^{25}$ years! 
+
+\index{data hiding|textbf}
+\begin{definition} [data hiding]
+	A hash function $H()$ is said to be {\em data hiding}, if when a secret value $r$ is selected from a high entropy 
+	probability distribution function, then given $y = H(r \mid \mid x)$, it is infeasible to find $x$. 
+	(A high entropy probability distribution function is one where there the probability value over any specific range is not 
+	significantly higher than others. This means that there is little knowledge about the distribution. Uniform probability 
+	density function has the highest entropy.)
+\end{definition}
+
+\noindent
+The use of the string $r$ in the above definition calls for an explanation. If the data-space is small, it is not possible to 
+achieve data hiding with any hash function $H(x)$. Hash can be computed for each possible data value, and the one that 
+matches $y$ is a possible solution. The way to achieve data hiding is to artificially expand the data space by concatenating
+the data with a secret string $r$, and then computing $y = H(r \mid \mid x)$. The secret string is chosen from a high entropy 
+probability distribution function, so that it's value cannot be guessed.
+%
+\index{nonce}
+While $x$ cannot be recovered from $y = H(r \mid \mid x)$, it is possible to authenticate a claimed copy of $x$ against
+the original, by computing it's hash and comparing it with the known value of $y$. Note that the string $r$ needs to be 
+disclosed during the authentication process. The string $r$ is referred to as the {\em nonce}, since it can be used only 
+once. 
+
+\index{puzzle friendly|textbf}
+\begin{definition} [puzzle friendly]
+	A hash function $H()$ is said to be {\em puzzle friendly}, if for any possible $n$-bit output value $y$, if $r$ is chosen 
+	from a high-entropy probability distribution function, then it is infeasible to to find $x$ such that $H(r \mid \mid x) = y$ 
+	in time significantly less than $2^n$.
+\end{definition}
+
+The computational puzzle deployed in this context involves finding a suitable nonce $r$, such that $H(r \mid \mid x) = y$.
+It can be done only with trial-and-error method. In practice, $y$ is constrained to a narrow range of the hash-space. For example, 
+with $y$ restricted to $1/10^{20}$-th of the hash space, an agent, on the average, will have to make 50 quintillion (trillion 
+trillion) attempts to find a suitable value for $r$.
+
+\index{SHA-256}
+A commonly used hash function that satisfies these properties and meets the security needs of most of the applications is
+SHA-256.
+The function takes arbitrary long input strings and produces a 256-bit output. Fast implementations of the algorithm are 
+available on FPGA~\citep{Suhaili:2017} and ASIC~\citep{Zhang:2019}, which are used in distributed real-time systems. 
+% \hgcomment{need a good citation for SHA-256}
+
+\index{digital signature|textbf}
+\index{PKE}
+% In a centralized trust system, a central agency is entrusted with some private information (e.g. a password) about the 
+% participants, which is used to authenticate the identity of the initiator of a transaction. 
+In absence of a central trusted party in a peer-to-peer system, every agent should be able to authenticate a transaction without 
+accessing any private information of the initiator. A solution to the problem is in the form of a {\em digital signature}, which 
+is based on public key encryption. 
+
+\begin{definition} [digital signature]
+	A {\em digital signature} is a unique bit-pattern appended to a message, which is an irrefutable proof of the
+	signatories endorsement of the message. 
+\end{definition}
+
+In digital signature, an agent $i$ signs a message created by it using it's secret key $sk_i$. Moreover, the signature string is a 
+function of the message, over and above the secret key, so that it cannot be copied from one message to another. Other agents
+can verify the authenticity the signature using the public key $pk_i$ of agent $i$.  
+%
+\index{ECDSA}
+\index{elliptic curve digital signature algorithm|see {ECDSA}}
+The sizes of the keys and the signature strings determine the level of security of a specific implementation. An implementation 
+that is widely used is the {\em Elliptic Curve Digital Signature Algorithm (ECDSA)}~\citep{Johnson:2001}, which uses a private
+key of 256 byes and produces a signature string of 512 bytes.
+
+

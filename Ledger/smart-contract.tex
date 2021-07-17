@@ -1,0 +1,232 @@
+\section{Scripts and Smart Contracts}
+
+\index{scripts}
+So far, we have viewed a transaction in a distributed ledger as a record of coins (or assets) changing hands. In practice, the 
+transactions are encoded as scripts that can validate the inputs and change the ownership of the coins. As an example, the output 
+of a transaction in Bitcoin, rather than simply containing the public key of the new owner of the coin, specifies a script that 
+asserts that the coins can be further redeemed by matching the signature with the public key of the new owner. Similarly, the 
+input of a transaction specifies a script that provides the public key of the existing owner. The two scripts are merged and 
+executed to validate the transaction.
+
+
+\begin{figure}[!htbp]
+	\centerline{
+		\epsfig{figure="Ledger/state-machine.eps", width=0.8\linewidth}
+	}
+	\caption{Distributed ledge as a state transition machine}
+	\label{fig:ledger:state-machine} 
+\end{figure}
+
+\index{state machine}
+Thus, we can consider a distributed ledger as a state machine, where the states comprise the set of all unspent coins and their 
+respective owners at a certain point of time. A transaction represents a state transition function. It takes an initial state 
+($S_0$) and a transformation rule ($TX$) specified through a script. It validates $TX$ with respect to $S_0$, and (if valid) applies 
+$TX$ on $S_0$  to produces a final state $S_1$. If validation fails, it produces an error and the state of the ledger does 
+not change.  
+
+\begin{equation}
+	Apply(S_0, TX) \rightarrow S_1 (\text{ or, } ERROR) 	
+\end{equation}
+
+\index{smart contract}
+The model is illustrated with a simple Bitcoin transaction in figure~\ref{fig:ledger:state-machine}, where an agent $A$
+pays 10 BTC to agent $B$. A transaction can be viewed as a {\em contract}, which when executed changes the state of the ledger. 
+The scripting language supported with Bitcoin is restrictive and supports transactions between two public key owners only. 
+Later implementations of distributed ledgers provide more powerful scripting languages that can be used to create various 
+applications based on distributed consensus. A contract created with a script is called a {\em smart contract}, since they 
+can execute automatically, on being invoked under certain conditions, without needing human intervention. The word 
+``smart'' in smart contract do not have any artificial intelligence connotation. 
+
+% \subsection{Ethereum and Scripting}
+
+A turing-complete scripting platform had been first  introduced with Ethereum, 
+%~\footnote{see Ethereum white-paper \url{https://ethereum.org/en/whitepaper/}.}, 
+where the sate of a ledger is represented by a set of accounts. An account is characterized by, amongst other things, an owner 
+and the current account balance.
+% ~\footnote{Ether is the native currency of Ethereum.}. 
+An Ethereum account can send messages to other accounts with transaction requests (signed data packets).
+%
+\index{accounts in Ethereum}
+Ethereum maintains two types of accounts: 
+\begin{enumerate}
+	\item An {\em externally own account} is a conventional accounts held by an agent. It is  controlled by the agent's
+		private key. An agent holding an externally owned account can send signed messages. 
+	\item A {\em contract account} contains some executable code (for the contract) and an internal storage that maintains 
+		it's state. When a contract account receives a message, it's code is executed. It can, in turn, send messages 
+		to other contracts as a result of the execution of its code. A contract account can be created by anyone.
+\end{enumerate}
+
+\index{Vyper} \index{Solidity} \index{Ethereum virtual machine}
+There are several high-level scripting languages for coding a contract for Ethereum, of which Vyper (similar to Python) and Solidity
+(similar to Java) are most popular. 
+% {Example codes in Vyper are available at
+% \url{https://vyper.readthedocs.io/en/stable/vyper-by-example.html}, and in Solidity at
+% \url{https://raw.githubusercontent.com/ethereum/solidity/develop/docs/examples/blind-auction.rst}.}.
+A script in any of the languages are compiled to a low-level language to be run on the Ethereum
+virtual machine. 
+
+%
+% \index{gas in Etehereum}
+% The scripting languages of Ethereum (and many other distributed ledgers) allow loop. This may result in very large (or, infinite)
+% long execution times because of inadvertent programming errors or deliberate denial-of-service 
+% attack. Ethereum solves this problem by making an account pay (with ether) for the steps executed. The account need to define
+% a maximum amount (gas), it is willing to pay for the execution, it the gas gets exhausted before completing a transaction,
+% the execution terminates and the state of the system does not change.  
+
+% We take a simplified version of sealed-bid auction, described in section~\ref{sec:ledger:auction}, as an example 
+% to smart contract and illustrate it with a pseudocode in listing~\ref{lst:ledger:auction}.
+% 
+% \begin{lstlisting} [basicstyle=\footnotesize, numbers=left, stepnumber=1,caption=Pseudocode for first-price sealed bid auction,
+% 	label=lst:ledger:auction]
+% # Data-structures
+% auctioneer:address  # Auctioneer 
+% endTime:time        # Auction end time 
+% ended:boolean       # Auction ended  
+% bids[]:array of structure # Received bids 
+%    bidder:address   # Bidder 
+%    value:number     # Bid value
+% nbids:number        # number of bids received so far
+% highestBid: structure # Highset bid received
+%    bidder:address   # Highest Bidder (address)
+%    value:number     # Highest bid value (number) 
+% 
+% # Initialize an auction
+% init(_auctioneer:address, _bidTime:interval)
+%    auctioneer = _auctioneer
+%    endTime = now + _bidTime
+%    nbids = 0
+%    ended = false
+% 
+% # Bid with a value
+% public bid(_bidder:address, _value:number)
+%    if(ended) 
+%       return error    # bid not accepted
+%    else
+%       bids[nbids].bidder = _bidder  # record current bider and bid-value 
+%       bids[nbids].value = _value    # a bidder can submit multiple bids
+%       nbids = nbids + 1             # increment number of bids received
+%       return success   # bid accepted
+% 
+% # End auction
+% # Return highest bidder and bid to auctioneer
+% public endAuction() 
+%    if (ended) or (now <= endTime) 
+%       return error   # auction already ended, or it is not yet time
+%    else
+%       ended = true   # no more bid submissions allowed
+%       highestBid = bids[argmax(Bids[].value)] # Bidder and value of the highest bid received
+%       send(auctioneer, highestBid)
+%       return success # auction successfully ended
+% \end{lstlisting}
+% 
+% A brief explanation of the code is as follows. Lines 1--11 declares the various data structures that will be required
+% for conducting the auction. The text following ``:'' indicates data type, e.g. auctioneer is of datatype address (public key).
+% The text following ``\#'' is comment. 
+% %
+% The first function to be called is ``init()'' (lines 13--18), which creates and initializes the auction. It notes down the auctioneer, 
+% computes the end-time for the auction, initializes number of bids received to zero, and declares ``ended'' to be false (assuming that 
+% the end time is some time in the future). The function is executed only once (like a constructor in java). 
+% %
+% The function ``bid()'' (lines 20--28) accepts bid-values. It can be called by anybody by sending a message to the contract account. 
+% The function records the bid value against the bidder in an array and increments the count.
+% %
+% The function ``endAuction()'' (lines 30--38) ends the auction and returns the highest bidder and the bid to the auctioneer. 
+% Before doing so, it checks if the auction has already ended or the ending time has been reached.
+% %
+% The code is simple~\footnote{In the presented pseudocode for sealed bid auction, the bids of the early bidders can be reviewed
+% by the late bidders, and the auction can be manipulated. A key feature in sealed bid auction is that the bidders encrypt their
+% bids and reveals it when the auction duration has ended (see discussions in section~\ref{sec:ledger:auction}). We have not
+% shown the ``reveal()'' function for the sake of brevity in this example. Complete code for sealed bid auction is available at
+% \url{https://vyper.readthedocs.io/en/stable/vyper-by-example.html} (in Vyper), and at
+% \url{https://raw.githubusercontent.com/ethereum/solidity/develop/docs/examples/blind-auction.rst} (in Solidity).}.
+% and is trivial to implement on a centrally trusted system. The difference in implementing it on Ethereum is
+% that every transaction will be accepted by global consensus, recorded in a blockchain and will be available for publicly audit
+% at any point of time, thereby alleviating the possibility of manipulation.
+% 
+% \subsection{Distributed Plan as Smart Contract}
+
+% Cyber-physical systems generally comprise large number (in order of thousands) of devices, often distributed over large 
+% geographical area and are sparsely connected through unreliable networks. Nevertheless, the applications of such systems
+% are often life-critical. A centralized control of the devices are impractical because of numbers, geographical distribution, 
+% privacy requirements and unreliability of networks. It is customary in a cyber-physical system to design autonomous agents 
+% to control a group of possibly collocated devices. The agents need to coordinate with each other to achieve some system
+% goals~\citep{Ding:2019}. We have introduced distributed planning and execution in chapter~\ref{chap:agents}. In this 
+% section, we introduce a smart contract based mechanism for establishing trust in such large-scale cyber-physical systems. 
+
+\index{distributed plan}
+\index{smart contract!distributed plan}
+We illustrate the use of smart contract with execution of a distributed plan in agent based systems, for which have provided a 
+representation in chapter~\ref{chap:agents} (see figure~\ref{fig:agents:mas-plan}). A successful execution of the plan requires 
+that the actions be scheduled only when the input dependencies and the preconditions are met. 
+For example, $act_{22}$ depicted in the figure can be executed only when $act_{11}$ has been completed and the preconditions 
+$p(act_{22})$ are met. In a distributed system, it is possible that an agent executes an action prematurely, either by error 
+or for some selfish reasons. 
+
+\begin{lstlisting} [caption=Pseudocode for distributed plan execution, label=lst:ledger:plan]
+init(plan)
+   ...
+   act_22:
+      in:  [ act_11 ]  
+      out: [ act_13, act_23 ]
+      p:   [ p_x:(d_x,min_x,max_x), ... ] 
+      e:   [ e_y:(d_y,min_y,max_y), ... ]  
+      code: some code
+   ...
+
+execute( act ):
+   # Check if input dependencies met 
+   if !(act.in: is empty)
+      return error
+   # Check if all preconditions are satisfied 
+   for each p_i in  act.p: 
+      if !(check( p_i:(d_i,min_i,max_i) ) == success)
+         return error
+   # Dependencies and preconditions met -- run action code 
+   run(act.code)
+   # Check effects
+   for each e_i in  act.e:
+      if !(check( e_i:(d_i,min_i,max_i) ) == success) 
+         return error 
+   # Update preconditions for actions in output list
+   for each act_i in act.out:
+      remove act from act_i.in: 
+   # All done
+   return success
+
+check( d_i, min_i, max_i ):
+   s_i = read(d_i)
+   if (s_i < min_i) or (s_i > max_i)
+      return false;
+   return true;
+\end{lstlisting}
+
+Correct execution of a distributed plan can be ensured with a distributed consensus mechanism~\citep{Shukla:2018}, without relying 
+on a trusted scheduler, which can be the target of a security attack. In this approach, the distributed plan may be represented 
+as a smart contract. A partial pseudocode for the contract is shown in listing~\ref{lst:ledger:plan}. In the listing, 
+we have represented $act_{11}$ as \texttt{act\_11}, etc.  
+%
+At initialization time, the plan can be expressed as a list of actions, where each member of the list contains lists of 
+dependencies (``in'' and ``out'' lists), preconditions and effects. It also contains the identity of the executable code  
+for the action. For example, lines 3--8 in the listing depicts the entry for action $act_{22}$.
+%
+Execution of an action in the plan is represented by a function ``execute()'' (lines 11--29), which checks the input dependencies and 
+the preconditions before running the corresponding code. Once the code is run, the (expected) effects are checked. Finally, current 
+action (which has now been completed) is removed from the input list of all actions in the output list of the current action to update 
+the depencies of the latter.  Thus, an action can be said to have it's input dependencies satisfied when it's input list is empty.
+
+The preconditions and the effects are typically checked by verifying if some sensor readings are within certain range. Thus,
+a precondition $p_i$ (or, an effect $e_i$) which is based on the reading $s_i$ of device $d_i$ can be expressed as
+
+\begin{equation}
+	p_i = s_i  \text{ in range } [ min_i, max_i]
+\end{equation}
+
+\noindent
+In general, the device to read for determining the precondition or the effect of an action can be under the control of a
+different agent. Thus, the checking of preconditions and effects can be represented as a function in the contract as shown
+in lines 31--35. 
+
+Besides reducing security vulnerability, another advantage of smart contract is that an agent is identified in the system through 
+public keys only and the privacy of the agent is preserved. This can be of paramount importance in many systems, for example, in 
+healthcare systems, dealing with private information of a person collected from wearable devices.
+
