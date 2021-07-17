@@ -1,0 +1,603 @@
+\section{Interval events}
+
+The discussions in the preceding sections deal with ordering of events that are represented as points in time. 
+The order of two point events can take three possible values, namely before, together and after. Let us represent them by 
+$<$, $=$ and $>$ respectively.
+%
+In reality, an event has a finite duration. For example, sending of a message requires the transmission buffer to be emptied 
+on a transmission channel, and receiving a message requires the transfer of incoming data on transmission channel to a 
+reception buffer, each of which takes finite time. Even an audio `beep' for a time signal has a start and an end-time, 
+separated by a finite, albeit small, interval. We deal with the relations between such interval events and their representations 
+in this section.  We define such events as interval events as follows.
+
+\begin{definition}[Interval event]
+	An interval event \texttt{X} is an event bounded in a finite interval of time. If $s_X$ and $e_X$ represent
+	the starting and ending points of the interval, the constraint $s_X < e_X$ holds.
+\end{definition}
+
+The temporal relation between two interval events \texttt{A} and \texttt{B} can be unambiguously expressed as a 4-tuple of  
+the temporal relations between their endpoints: $( r(s_A, s_B), r(s_A, e_B), r(e_A, s_B), r(e_A, e_B) )$. Each member of the 
+tuple can take any of the values from the set $\{<,=,>\}$. Considering the constraint $s_X < e_X$, we can have 13 valid relations
+between two interval events, which are known as Allen's relations~\cite{Allen:1983}, and are summarized in 
+figure~\ref{fig:clock:Allen}. 
+%
+In the figure, each of the relation is identified with a mnemonic, which we shall refer to in the rest of this section. The semantics 
+of the relation is pictorially depicted with two horizontal bars representing the duration of a reference event \texttt{A} and 
+a primary event \texttt{B}, with the assumption that time flows from left to right. The temporal relations between the end-points 
+of the intervals for every event are also provided. 
+% Note that it is not always necessary to specify all the members of 4-tuples to define a temporal relation between two interval 
+% events. For example, in ``before'' relation, the specification $e_B < s_A$ implies the other three members of the tuple: 
+% $s_B < s_A$, $s_B < e_A$ and $e_B < e_A$. 
+Note that the relations 8--13 are inverse relations of 1--6, in the reverse order, e.g. 
+\texttt{B} b \texttt{B} $\equiv$ \texttt{A} bi \texttt{B}. The inverse of the equality relation is itself, i.e. 
+\texttt{B} eq \texttt{A} $\equiv$ \texttt{A} eq \texttt{B}.
+
+\begin{figure}[htbp!]
+\centerline{
+%	\scalebox{0.8}{\input{./Clock/allen.pgf}}
+	\epsfig{figure=./Clock/allen.eps,width=0.8\linewidth}
+}
+\caption{Allen's temporal relations.}
+\label{fig:clock:Allen}
+\end{figure}
+
+\vspace{2mm}
+% \noindent
+% \hgcomment{Following example can be removed, if required}
+
+\noindent
+{\bf Example:}
+
+\noindent
+Consider a push-button toggle switch used to turn a light bulb on or off. The bulb is initially switched off. When the
+switch is operated twice in succession, it lights on and then lights off again. Assume that switching on is triggered 
+by the positive edge, i.e. the bulb turns on as soon as the switch is pressed. Switching off is triggered by the negative edge, 
+i.e. the bulb turns off as soon as the switch is released. 
+%
+Let us denote the events representing the two operations of the switch with $\texttt{S}_1$ and $\texttt{S}_2$, and the lighting 
+of the bulb as \texttt{B}. Figure~\ref{fig:clock:Allen-example} shows the relations between the three events, which can be stated 
+as (a) $\texttt{S}_1$ {\bf b} $\texttt{S}_2$, (b) \texttt{B} {\bf si} $\texttt{S}_1$, and (c) \texttt{B} {\bf fi}  $\texttt{S}_2$.
+
+
+\begin{figure}[htbp!]
+\centerline{
+%	\scalebox{0.8}{\input{./Clock/allen-example.pgf}}
+	\epsfig{figure=./Clock/allen-example.eps,width=0.8\linewidth}
+}
+\caption{Allen's temporal relations illustrated with an example}
+\label{fig:clock:Allen-example}
+\end{figure}
+
+
+\subsection{Allen's Interval Algebra}
+\label{sec:clock:Allen-algebra}
+
+If \texttt{A}, \texttt{B} and \texttt{C} represent three interval events, and if the temporal relations between the event-pairs 
+(\texttt{A}, \texttt{B}) and (\texttt{B}, \texttt{C}) are given, it is possible to reason with them to establish some relational 
+constraints between the event pair (\texttt{A}, \texttt{C}). Before proceeding with the formal algebra to deduce such constraints, 
+let us provide a few intuitive examples. 
+\begin{enumerate}
+	\item Consider the statement ``I went to gym before having my breakfast, and I went to office after the breakfast.''
+		latter. Let us represent the events ``going to gym'', ``having breakfast'' and ``going to office'' as \texttt{G}, 
+		\texttt{B} and \texttt{O} respectively. The above statement can be formalized as temporal relations between the 
+		event-pairs (\texttt{G}, \texttt{B}) and (\texttt{O}, \texttt{B}) as \texttt{G} b \texttt{B} and 
+		\texttt{O} bi \texttt{B}. 
+		%
+		From these two relations, we can deduce the temporal constraint between the events \texttt{G} and \texttt{O} 
+		as \texttt{G} b \texttt{O}, i.e. I went to gym before going to office. This example illustrates reasoning with 
+		temporal sequencing of events.
+	\item Consider the statement ``I attended office some time during yesterday, and ate my lunch when at office''. Denoting 
+		the events ``yesterday'', ``attending office'' and ``eating lunch'' with \texttt{Y}, \texttt{O} and \texttt{L} 
+		respectively, we can interpret the sentence as \texttt{O} d \texttt{Y} and \texttt{L} d \texttt{O}. 
+		%
+		From these two relations, it is possible to infer the constraint between the events \texttt{L} and \texttt{Y} 
+		as \texttt{L} d \texttt{Y}, i.e. I ate lunch during yesterday. This example illustrates an hierarchical 
+		decomposition of events.
+	\item Consider the statement ``Ram came in the room while Shyam was there, and Jadu came into the room when Ram
+		was there''. Representing the three events of Ram's, Shyam's and Jadu's being in the room as \texttt{R},
+		\texttt{S}, and \texttt{J}, we can formalize the statement as \texttt{S} o \texttt{R} and \texttt{J} o \texttt{R}.
+		%
+		In this case, we have three distinct possibilities: 
+		\begin{itemize}
+			\item Shyam left the room before Jadu came in, i.e. \texttt{S} b \texttt{J}, 
+			\item Shyam and Jadu crossed their ways at the door, i.e. \texttt{S} m \texttt{J}, and 
+			\item Shyam and Jadu were together in the room for some time, i.e. \texttt{S} o \texttt{J}. 
+		\end{itemize}
+		Note that while the relational constraints between \texttt{S} and \texttt{J} can be uniquely resolved to a single
+		relation in the earlier examples, it is the disjunction of three relations in this example. We shall use the notation 
+		\texttt{C} (b m o) \texttt{A} to represent the same.
+\end{enumerate}
+
+
+With this intuitive understanding, we proceed with a formal presentation of Allen's interval algebra. In the following treatment, we 
+consider three events as $E_i$, $E_j$ and $E_k$, and we represent the relational constraint between the events as $R_{ij}$, $R_{jk}$ 
+and $R_{ik}$ respectively. In general, a relational constraint is a disjunction of some of the Allen's relations. 
+%
+Given a relation $p \in R_{ij}$ and $q \in R_{jk}$, a {\em transitivity table} as shown in table~\ref{tab:clock:Allen-transitivity}, 
+is used to derive the resulting constraint on the relation $R_{ik}$. The header row and the column in the table 
+represent the possible relations in $R_{ij}$ and in $R_{jk}$ respectively. An entry in the table, designated as $T(p,q)$, where $p$ 
+is the row number and $q$ is the column number, represents the relational constraints imposed on $R_{ik}$ for the corresponding values 
+$p \in R_{ij}$ and $q \in R_{jk}$. When there are more than one relation specified in a table cell, it means that the imposed constraint
+is a logical disjunction of those relations. For example, the entry $T(\texttt{di},\texttt{b}) = (\texttt{b m o fi di})$ implies that 
+the constraint imposed
+by relations $\texttt{di} \in R_{ij}$ and $\texttt{b} \in R_{jk}$ on $R_{ik}$ allows the latter to assume any of the five values. Some 
+of the cells are marked with $\mathbb{NC}$, meaning that there will be no constraint imposed on $R_{ik}$ for the corresponding values 
+of $(p,q)$, i.e. it is a disjunction of all of 13 Allen's relations. The reader is advised to check the validity of at least some of the 
+entries of the table.
+ 
+The constraint $C$ imposed on $R_{ik}$ by $R_{ij}$ and $R_{jk}$ is computed as a logical disjunction for all possible combinations of 
+$T(p,q) \forall p \in R_{ij}, \forall q \in R_{jk}$ as shown in algorithm~\ref{algo:clock:constraint}. Note that $C$ is the additional 
+constraint on $R_{ik}$ imposed by the constraints $R_{ij}$ and $R_{jk}$ and is not it's final value. 
+
+\begin{algorithm}[!htbp]
+	\SetAlgoLined
+	\SetKwProg{proc}{procedure}{}{end}
+	\DontPrintSemicolon
+	\proc{Constraint($R_{ij}, R_{jk}$)}{
+		$C=\emptyset$\;
+		\For{each $p \in R_{ij}$}{
+    			\For{each $q \in R_{jk}$}{
+        			$C \leftarrow C \cup T(p,q)$\;
+    			} % EndFor
+		} % EndFor
+		\Return $C$\;
+	} % EndProc
+	\caption{Computing relational constraint}
+	\label{algo:clock:constraint}
+\end{algorithm}
+
+\begin{table}[htbp!]
+	\tiny
+	\caption{Transitivity table for temporal relations \label{tab:clock:Allen-transitivity}} {
+
+	% \begin{center}
+		% \begin{tabular}{|p{8mm}||p{8mm}|p{8mm}|p{8mm}|p{8mm}|p{8mm}|p{8mm}|p{8mm}|p{8mm}|p{8mm}|p{8mm}|p{8mm}|p{8mm}|p{8mm}|}
+		\begin{tabular}{|p{3mm}||p{5mm}|p{5mm}|p{5mm}|p{5mm}|p{5mm}|p{5mm}|p{5mm}|p{5mm}|p{5mm}|p{5mm}|p{5mm}|p{5mm}|p{5mm}|}
+		\hline
+		    & {\bf b} & {\bf bi} & {\bf d} & {\bf di} & {\bf o} & {\bf oi} & {\bf m} & {\bf mi} & {\bf s} & {\bf si} & {\bf f} & {\bf fi} & {\bf eq }\\ 
+		\hline
+		\hline
+			{\bf b} & b & $\mathbb{NC}$ & b m o s d & b & b & b m o s d & b & b m o s d  & b & b & b m o s d & b & b \\
+		\hline
+			{\bf bi} & $\mathbb{NC}$  & bi & bi mi oi f d & bi & bi mi oi f d & bi  & bi mi oi f d & bi & bi mi oi f d & bi & bi & bi & bi \\
+		\hline
+			{\bf d} & b & bi & d & $\mathbb{NC}$  & b m o s d & bi mi oi f d & b & bi & d & bi mi oi f d & d & b m o m s d & d \\
+		\hline
+		{\bf di} & b m o fi di & bi mi oi si di & o fi di si eq s d f oi & di & o fi di & oi si di & o fi di & oi si di & o fi di & di & oi si di & di & di \\
+		\hline
+		{\bf o} & b & bi mi oi si di & o s d & b m o fi di & b m o & o fi di si eq s d f oi & b & oi si di & o & di fi o & d s o & b m o & o \\
+		\hline
+		{\bf oi} & b m o fi di & bi & oi f d & bi mi oi si di & o fi di si eq s d f oi & bi mi oi & o fi di & bi & oi f d & oi mi bi &oi & oi si di & oi \\
+		\hline
+		{\bf m} & b & bi mi oi si di & o s d & b & b & o s d & b & f eq fi & m & m & d s o & b & m \\
+		\hline
+		{\bf mi} & b m o fi di & bi & oi f d & bi & oi f d & bi & s eq si & bi & oi f d & bi & mi & mi & mi \\
+		\hline
+		{\bf s} & b & bi & d & b m o fi di & b m o & oi f d & b & mi & s & s eq si & d & b m o & s \\
+		\hline
+		{\bf si} & b m o fi di & bi & oi f d & di & o fi di & oi & o fi di & mi & s eq si & si & oi & di & si \\
+		\hline
+		{\bf f} & b & bi & d & bi mi oi si di & o s d & bi mi oi & m & bi & d & bi mi oi & f & f eq fi & f \\
+		\hline
+		{\bf fi} & b & bi mi oi si di & o s d & di & o & oi si di & m & oi si di & o & di & f eq fi & fi & fi \\
+		\hline
+		{\bf eq} & b & bi & d & di & o & oi & m & mi & s & si & f & fi & eq \\ 
+		\hline
+	\end{tabular} 
+	} {}
+	% \end{center}
+	% \caption{Transitivity table for temporal relations}
+	% \label{tab:clock:Allen-transitivity}
+\end{table}
+
+% \hgcomment{
+% 	A note on idempotence: If you look at the diagonal of the table, you will find some idempotent relations besides eq, e.g. 
+% 	$T(\texttt{b,b}) = \texttt{b}$, etc. But, I am not sure if they worth a mention without some discussions on their semantics.
+% 	Need to think it through.
+% }
+
+In general, when we deal with a number of events, they can be organized in a network, where the nodes represent the events and the 
+edges represent their relational constraints. We refer to the network as an {\em event network}. It is assumed that the network maintains 
+the complete information about the relational constraints between the events that are known at any point of time. When a new relational 
+constraint is added, all its consequences are computed recursively in the network as a transitive closure of the new constraint and the 
+existing ones, as shown in algorithm~\ref{algo:clock:add}. 
+%
+% \noindent
+A brief explanation of the algorithm is as follows. The superscripts $old$ and $new$ refer to the old (existing) and the new 
+values of a constraint respectively. They are used as temporarily variables for comparison purposes, to decide if further recursion 
+is needed. $Q$ maintains a queue of such new constraints, either externally specified, or generated at the intermediate stages of the 
+recursive computation, for which the consequences are yet to be determined. The functions {\em Comparable$(i,k)$} and {\em Comparable$(k,j)$}
+yield the set of all nodes $k$ in the network, for which the constraints $R_{ik}$ and $R_{kj}$ respectively are likely to be impacted by 
+a change in $R_{ij}$. The function {\em Constraint$(\circ, \circ)$} is computed with algorithm~\ref{algo:clock:constraint}.
+%
+Addition of a new constraint in the network restricts the existing constraints further. The updated constraint between a pair of 
+events is the intersection of the existing constraints and the new ones resulting from the changes in other parts of the network.
+If this intersection is an empty set, it implies the impossibility of the situation.
+The recursive computation continues as long as there is something to update. Since there are 13 possible relations, the worst case 
+complexity of the algorithm in a network with $N$ nodes is $13 \times \frac{(N-1)(N-2)}{2}$.
+
+\begin{algorithm}[!htpb]
+	\SetAlgoLined
+	\SetKwProg{proc}{procedure}{}{end}
+	\DontPrintSemicolon
+	\proc{Add($R^{new}_{ij}$)}{
+		add $R^{new}_{ij}$ to queue $Q$\; 
+		\While {$Q$ is not empty}{
+			get next $R^{new}_{ij}$ from $Q$\;
+			$R^{old}_{ij} \leftarrow R_{ij}$\;
+			$R_{ij} \leftarrow R_{ij} \cap R^{new}_{ij}$\;
+			\If {$R_{ij} \subset R^{old}_{ij}$} {
+				\For {each node $k$, such that Comparable$(k,j)$} {
+					$R^{old}_{kj} \leftarrow R_{kj}$\;
+					$R_{kj} \leftarrow R_{kj} \cap$ Constraint$(R_{ki},R_{ij})$\; 
+					\If {$R_{kj} \subset R^{old}_{kj}$} {
+						add $R_{kj}$ to queue $Q$\;
+					} % EndIf
+				} % EndFor
+				\For {each node $k$, such that Comparable$(i,k)$} {
+					$R^{old}_{ik} \leftarrow R_{ik}$\;
+					$R_{ik} \leftarrow R_{ik} \cap$ Constraint$(R_{ij},R_{jk})$\; 
+					\If {$R_{ik} \subset R^{old}_{ik}$} {
+						add $R^n_{ik}$ to queue $Q$\;
+					} % EndIf
+				} % EndFor
+			} % EndIf
+		} % EndWhile
+		\Return void\;
+	} % EndProc
+	\caption{Addition of a new constraint in event network}
+	\label{algo:clock:add}
+\end{algorithm}
+
+\vspace{2mm}
+\noindent
+{\bf Example:}
+
+\noindent
+Consider the statement: ``I clicked the switch to turn on the light''. It establishes a temporal constraint between two events 
+clicking the switch, and the light being on. Designating the two events with \texttt{S} and \texttt{L}, the temporal constraint
+between the events can be expressed as $R_{SL} \equiv$ \texttt{S} (m o) \texttt{L}. 
+Now, consider that we add a statement ``Rajan was not there in the room when I clicked the switch''. We have introduced a new event
+Rajan's presence in the room. Denoting the event with \texttt{R}, it's relation with clicking the switch can be formalized as 
+$R_{RS} \equiv$ \texttt{R} (b m mi bi) \texttt{S}. 
+The event network depicting the three events and the {\it specified temporal} constraints is shown in 
+figure~\ref{fig:clock:Allen-algebra-example}(a).
+
+\begin{figure}[htbp!]
+        \subfigure[]{
+                \begin{minipage}{\linewidth}
+                \centerline{
+%			\scalebox{0.8}{\input{./Clock/allen-algo-1.pgf}}
+			\epsfig{figure=./Clock/allen-algo-1.eps,width=0.4\linewidth}
+                }
+                \end{minipage}
+        }
+        \subfigure[]{
+                \begin{minipage}{0.5\linewidth}
+                \centerline{
+%			\scalebox{0.8}{\input{./Clock/allen-algo-2.pgf}}
+			\epsfig{figure=./Clock/allen-algo-2.eps,width=0.8\linewidth}
+                }
+                \end{minipage}
+        }
+        \subfigure[]{
+                \begin{minipage}{0.5\linewidth}
+                \centerline{
+%			\scalebox{0.8}{\input{./Clock/allen-algo-3.pgf}}
+			\epsfig{figure=./Clock/allen-algo-3.eps,width=0.8\linewidth}
+                }
+                \end{minipage}
+        }
+	\caption{Stages of event network update}
+	\label{fig:clock:Allen-algebra-example}
+\end{figure}
+
+Addition of the second relation prompts a computation for the relation $R_{RL}$ between the events \texttt{R} and \texttt{L}, i.e. 
+Rajan's presence in the room and the light being on. We find $R_{RL}$ to be \texttt{R} (b si eq s d f oi mi bi) \texttt{L}, using 
+algorithm~\ref{algo:clock:constraint} with $R_{RS}$ and $R_{SL}$ as the parameters. 
+% To compute the constraint, we note that
+% 
+% \begin{tabbing}
+% 1234\=1234567890123456\=1234567890123456\=12345678901234567890\=123456789012345678\=\kill
+% 	\> $T$(b,m) = b \> $T$(m,m) = b  \> $T$(mi,m) = (s eq si) \> $T$(bi,m) = (bi mi oi f d) \\
+% 	\> $T$(b,o) = b \> $T$(m,o) = b  \> $T$(mi,o) = (oi f d) \> $T$(bi,o) = (bi mi oi f d) \\
+% \end{tabbing}
+% 
+% \noindent
+% We compute $R_{RL}$ as the union of all these relations, i.e. \texttt{R} (b si eq s d f oi mi bi) \texttt{L}.
+The updated network is shown in figure~\ref{fig:clock:Allen-algebra-example}(b). 
+% Note that this disjunction includes all possible relations, except m, o, fi and di. 
+The reader is advised to check the semantic consistency of this outcome with the stated facts.
+
+Let us assume that we get some further information, namely ``Rajan was there in the room at a later time while the light was 
+on''. This new information can be formalized as an added constraint $R^{new}_{RL} \equiv$ \texttt{R} (oi si di) \texttt{L}. Inclusion
+of the new constraint results in an update in the value of $R_{RL}$ as \texttt{R} (oi si) \texttt{L}, the intersection of the 
+existing constraint and the new one. The update in $R_{RL}$ triggers a recursive update in the network that can be computed with 
+algorithm~\ref{algo:clock:add}. 
+%
+A change in $R_{RS}$ will be effected using constraints $R_{RL}$ (updated) and $R_{LS}$~\footnote{The constraint $R_{LS}$ consists of 
+the inverse of the relations in the constraint $R_{SL}$, i.e. \texttt{L} (mi oi) \texttt{S}}. We can find $R^{new}_{RS}$ as \texttt{R} 
+(bi mi oi) \texttt{S} using algorithm~\ref{algo:clock:constraint}. Taking its intersection with its existing value, we get $R_{RS}$ as 
+\texttt{R} (bi mi) \texttt{S}. The recursion stops here, since there is no more nodes to traverse. 
+The updated network is shown in figure~\ref{fig:clock:Allen-algebra-example}(c). 
+ 
+The semantics of change in $R_{RS}$ is as follows. The new knowledge that Rajan was there later in the room, combined with
+the earlier knowledge that he was not there when the switch was operated, excludes the possibility of his being in the room
+before the switch was clicked. Of course, it is assumed that the event of Rajan's presence in the room is one single interval, 
+and we discount the possibility of his leaving the room temporarily when the switch was operated.
+This example illustrates the practical utility of Allen's interval algebra in reasoning with the temporal relations
+of interval events. The reader is advised to verify the computations in this example and the semantic consistency of the 
+results with the stated facts.
+
+\subsection{Conceptual neighborhood}
+
+The discussions in the earlier sections of this chapter show that despite various clock synchronization methods, the sequence of 
+point events, recorded by different processors on a distributed system, cannot always be precisely determined. For example, if the 
+audio of a gun-shot and the visual scene of a man falling are recorded by a microphone and a video camera connected to different 
+processors in a distributed system, it may be difficult to establish the exact sequence of the start and the end points of the 
+audio and the visual events. There are many factors other than network delays in a distributed system, which also contributes to 
+the uncertainty, for example delays introduced by the recording equipment, the difference in the speeds of light and sound, 
+and inherent nondeterminism in start and end points of an event~\footnote{For example, when does a man, who is already in motion 
+(say walking), start falling? when does he stop falling?}. Moreover, in the last section, we have seen that the inferred relation 
+between event pairs cannot always be unambiguously resolved. Thus, there are many situations when we may have to be satisfied with 
+the inexact knowledge about the relations between interval events.
+
+  
+\begin{figure}[htbp!]
+	\centerline{
+%		\scalebox{0.5}{\input{./Clock/allen-semantics.pgf}}
+		\epsfig{figure=./Clock/allen-semantics.eps,width=0.8\linewidth}
+	}
+	\caption{Semantics of Allen's relations}
+	\label{fig:clock:Allen-semantics}
+\end{figure}
+ 
+The ambiguity in establishing the temporal relations between the events motivates exploration of the nature of the inexactness
+in the relations. Allen's relations can be placed on a on a two dimensional grid~\cite{Freska:1992} as shown in
+figure~\ref{fig:clock:Allen-semantics}, to understand their semantics. The edges of the grid are marked with the comparison between 
+the start and the end points of the two events, designated as \texttt{A} and \texttt{B}. The 13 relations are depicted as cells in 
+the grid in their respective positions for the comparison results. We observe that only one of the comparison parameters change 
+between any two adjacent relations, vertically, horizontally, or diagonally.
+It implies that it is possible to move from one relation to any of its adjacent relation by continuously deforming (i.e. by 
+continuously changing the end-points of) either or both the events without satisfying any other relation at an intermediate stage. 
+Thus, a small error in perceiving the end-points of the events is likely to result in misclassification of their relation to 
+an adjacent one.
+
+The adjacent relations in figure~\ref{fig:clock:Allen-semantics} are called {\em conceptual neighbors}. A set of relations forms 
+a {\em conceptual neighborhood}, if the its members are connected through conceptual neighborhood relations (e.g. {\bf b}, {\bf m} and 
+{\bf o}).  Note that the members of any of the entries in the transitivity table used in Allen's interval algebra 
+(table~\ref{tab:clock:Allen-transitivity}) belong to a conceptual neighborhood (and that it is not an accident). 
+%
+Thus, when the relation between two events are not known with certainty, it is still possible to represent their relation in an 
+inexact fashion as a conceptual neighborhood. Such inexact descriptions are often useful for logical reasoning with interval events, 
+as illustrated in an earlier example.
+
+\subsection{Binary encoding}
+
+A computationally efficient binary encoding scheme for reasoning with the relations between two interval events has been proposed 
+in~\cite{Papadias:2001}. In this scheme, the relation of a primary event \texttt{B} is established with a reference event \texttt{A}
+in the following way. We define five neighborhoods of the reference event \texttt{A} as follows:
+
+\begin{itemize}
+	\item \texttt{t}: $(-\infty, s_A)$, the open interval from the beginning of time to the starting point of \texttt{A}, excluding 
+		the starting point.
+	\item \texttt{u}: $[s_A, s_A]$, the infinitesimally small closed interval covering the starting point of \texttt{A}.
+	\item \texttt{v}: $(s_A, e_A)$, the open interval covering the duration of \texttt{A}, excluding the endpoints.
+	\item \texttt{w}: $[e_A, e_A]$, the infinitesimally small closed interval covering the ending point of \texttt{A}.
+	\item \texttt{x}: $(e_A, \infty)$, the open interval from the ending point of \texttt{A} to the end of time, excluding 
+		the ending point.
+\end{itemize}
+
+\begin{figure}[htbp!]
+	\centerline{
+%		\scalebox{0.8}{\input{./Clock/papadias.pgf}}
+		\epsfig{figure=./Clock/papadias.eps,width=0.8\linewidth}
+	}
+	\caption{Binary encoding of temporal relations}
+	\label{fig:clock:Papadias}
+\end{figure}
+ 
+\noindent
+The neighborhoods are shown in figure~\ref{fig:clock:Papadias}. The relation of \texttt{B} with \texttt{A} is represented
+with 5 bits, the truth value of each representing the intersections of the interval of \texttt{B} with one of the neighborhoods of 
+\texttt{A}. For example, in figure~\ref{fig:clock:Papadias}, the relationship of \texttt{B} with \texttt{A} can be represented
+by 11100, since the interval of \texttt{B} intersects with the neighborhoods \texttt{t}, \texttt{u} and \texttt{v} of \texttt{A}.
+It is evident that the different temporal relations between two events can be represented by continuous set of 1s in the bit-string
+(excluding 01000 and 00010, since events of infinitesimally small durations are discounted). Indeed, there are exactly 13 valid
+bit-strings in this representation, each corresponding to one of the Allen's relations as shown in table~\ref{tab:clock:Papadias}.
+
+\begin{table}
+	\footnotesize
+	\caption{Binary encoding of temporal relations \label{tab:clock:Papadias}} {
+	% \begin{center}
+		\begin{tabular}{p{10mm} p{10mm} |   p{10mm} p{10mm} |  p{10mm} p{10mm} | p{10mm} p{10 mm}} 
+		\hline
+		Bit-stream & Allen Relation & Bit-stream & Allen Relation & Bit-stream & Allen Relation 
+			& Bit-stream & Allen Relation \\ 
+		\hline
+		10000 & \texttt{B} b  \texttt {A} & 11000 & \texttt{B} m  \texttt {A} & 11100 & \texttt{B} o  \texttt {A} 
+			& 11110 & \texttt{B} fi \texttt {A} \\
+		11111 & \texttt{B} di \texttt {A} & 01111 & \texttt{B} si \texttt {A} &  01110 & \texttt{B} eq \texttt {A} 
+			& 01100 & \texttt{B} s  \texttt {A} \\
+		00100 & \texttt{B} d \texttt {A} & 00110 & \texttt{B} f  \texttt {A}  & 00111 & \texttt{B} oi \texttt {A} 
+			& 00011 & \texttt{B} mi \texttt {A}  \\
+		00001 & \texttt{B} bi \texttt {A} & & & & & & \\
+		\hline
+		\end{tabular}
+	}{}
+	% \end{center}
+	% \caption{Binary encoding of temporal relations}
+	% \label{tab:clock:Papadias}
+\end{table}
+
+There is a simple relation between binary encoding and conceptual neighborhood shown in figure~\ref{fig:clock:Allen-semantics}. 
+It is easy to see that one can move to a neighboring relation by ``pumping'' or ``pruning'' an 1 on either side of a bit-stream encoding.
+For example pumping an 1 to the right of ``meets'' (11000) takes it to ``overlaps'' (11100), and further pruning an 1 to the left takes 
+it to ``starts'' (01100).
+% 
+% $11000 \xrightarrow{pump-right} 11100 \xrightarrow{prune-left} 01100$
+%
+The number of bits to be pumped or pruned to reach one relation from another can be considered a metric for the semantic distance 
+(in the space of conceptual neighborhood) between two relations. For example, the semantic distance between ``meets'' and ``starts'' 
+is 2.
+ 
+An efficient algorithm for computing the semantic distance between two bit-encoded relations $R_1$ and $R_2$ is presented in 
+algorithm~\ref{algo:clock:semantic-distance-binary}. This is useful for approximate search in event databases, like find the events
+that {\it approximately} overlaps with a gun-shot being heard. Given a reference event $\texttt{E}_r$ and a reference relation 
+$R_r$, the query can be formalized as ``fetch all events $\texttt{E}$ such that 
+$d( R(\texttt{E}, \texttt{R}_r), R(\texttt{E}, \texttt{R}_r)) \leq \tau$, where $d$ is the semantic distance between the relations, and 
+$\tau$ is an arbitrary constant. The idea is to implement a neighborhood of radius $\tau$ in the relation space around the
+reference event and the reference query, and to fetch all events whose relations with the reference event that fall in that neighborhood. 
+It is a useful tool when the relation between event endpoints captured on different nodes of a distributed system cannot be ascertained.
+We shall not discuss the database design issues to implement such queries in this chapter.
+
+\begin{algorithm}[!htbp]
+	\SetAlgoLined
+	\DontPrintSemicolon
+	\SetKwProg{proc}{procedure}{}{end}
+	\proc{SemanticDistance($R_1, R_2$)}{
+		$R = R_1$ \texttt{bit-or} $R_2$ \;
+		$i_{left}, i_{right} =$ left-most, right-most bit-position of $R$ that is 1\;
+		$d = 0$\;
+		\For{$i = i_{left}$  to $i = i_{right}$}{
+			\If {$R_1[i] = 0$} {
+				$d \leftarrow d+1$\;
+			} % EndIf
+			\If {$R_2[i] = 0$} {
+				$d \leftarrow d+1$\;
+			} % EndIf
+		} % EndFor
+		\Return $d$\;
+	} % EndProc
+	\caption{Computing semantic distance for bit-encoded temporal relations}
+	\label{algo:clock:semantic-distance-binary}
+\end{algorithm}
+
+\subsection{Fuzzy representation}
+\label{sec:clock:fuzzy}
+
+Papadias'es binary encoding scheme, discussed in the last section, enables comparing the relations between event-pairs, 
+but with a large granularity. It is possible to define the scheme at a more detailed level by adding more neighborhoods 
+and using more number of bits to represent the relations. For example, with introduction of two additional neighborhoods 
+with duration $\delta$ before the staring point and after the ending point of \texttt{A}, and using a 7-bit representation, 
+we can distinguish between ``far-before'', ``near-before'', ``near-after'' and ``far-after''. Nevertheless, such schemes
+with any finite number of intervals will still have granularity, and the choice of neighborhood definitions may seem arbitrary.
+%
+To overcome this difficulty, \cite{Wattamwar:2008} proposes a representation for relation between interval events that is 
+essentially a generalization of Papadias'es binary encoding scheme. In this approach, a relation is expressed as a five-tuple
+of numbers ($\mu_t, \mu_u, \mu_v, \mu_w, \mu_x$), (in place of 5 bits) each of which represent a fuzzy membership function for 
+the primary event to intersect with a neighborhood of the reference event. 
+
+\begin{figure}[htbp!]
+	\centerline{
+%		\scalebox{0.8}{\input{./Clock/fuzzy.pgf}}
+		\epsfig{figure=./Clock/fuzzy.eps,width=0.8\linewidth}
+	}
+	\caption{Fuzzy encoding of temporal relations}
+	\label{fig:clock:Wattamwar}
+\end{figure}
+
+
+In order to determine the fuzzy membership value for the neighborhoods, a fuzzy membership function is associated with each of 
+the neighborhoods of the reference event. Let them be designated as $\phi_t$, $\phi_u$, $\phi_v$, $\phi_w$ and $\phi_x$ respectively. 
+%
+While the functions can be designed in different ways, a general property for them is as follows. A function should attain the maximum
+value of 1 in it's own neighborhood and 0 away from it, with graded transition at either end. We depict a piece-wise linear 
+function for one of them ($\phi_v$) satisfying this property in figure~\ref{fig:clock:Wattamwar}. 
+%
+The maximum value of the fuzzy function attained in the interval represented by the primary event determines the corresponding 
+fuzzy membership value, for the relation. For example, in figure~\ref{fig:clock:Wattamwar}, we note that the maximum value attained 
+by $\phi_v$ in the interval represented by event \texttt{B} is 0.8, making it the value of $\mu_v$ for the relation of event \texttt{B} 
+with respect to event \texttt{A}. With reasonable assumptions about the shape of the other fuzzy membership functions, the
+relation of \texttt{B} with respect to \texttt{A} in the diagram can be expressed as $(1.0, 1.0, 0.8, 0.0, 0.0)$. While crisp
+``meet'' and overlap relations are expressed as $(1,1,0,0,0)$ and $(1,1,1,0,0)$ respectively, the fuzzy representation suggests
+that the relation between the two events is known with some ambiguity, with an assumption that either or both of $e_B$ and $s_A$
+are not accurately known. 
+ 
+The fuzzy representation can be used to determine a graded distance between two relations for implementing approximate
+relational queries. The algorithm for computation of semantic distance for fuzzy relations is as shown in 
+algorithm~\ref{algo:clock:semantic-distance-fuzzy}. 
+
+
+\begin{algorithm}[!htbp]
+	\SetAlgoLined
+	\DontPrintSemicolon
+	\SetKwProg{proc}{procedure}{}{end}
+	\proc{SemanticDistance($R_1[5], R_2[5]$)} {
+		\For {$i = 1 .. 5$}{
+			$R[i] = \texttt{max}(R_1[i],R_2[i])$\; 
+		} % EndFor
+		$i_{min}, i_{max} =$ minimum, maximum value of $i$ for which $R[i] \neq 0$\;
+		\For {$i = i_{min} .. i_{max}$}{
+			\eIf {$R[i] = 0$} {
+				$d \leftarrow d + 1$\;
+			}
+			{
+				$d \leftarrow d + (R[i] - R_1[i])$ \; 
+				$d \leftarrow d + (R[i] - R_2[i])$ \; 
+	
+			} % EndIf
+		} % EndFor
+		\Return $d$\;
+	} % EndProc
+	\caption{Computing semantic distance for fuzzy temporal relations}
+	\label{algo:clock:semantic-distance-fuzzy}
+\end{algorithm}
+
+\subsection{Spatial Events}
+
+The events dealt with a distributed system need not always be restricted to temporal dimension alone. For example, visual events
+as captured with video-cameras cover some spatial extents as well. Allen's interval algebra and its extensions in the forms of
+bit-encoded or fuzzy representations, are equally applicable to any spatial dimension. The semantics of the relations need to be 
+appropriately modified in such cases, for example, the relation \texttt{b} may stand for ``to the left of'' or ``above''. 
+%
+As in the case of temporal dimension, there may be ambiguities in ascertaining the spatial relation between the end-points of
+the events, as exemplified in the differences found in relative positions of objects seen with two different cameras, separated
+in space. This necessitates the need for considering conceptual neighborhoods and approximate queries with spatial events as well.
+
+It may seem to be logical to represent relations between multi-dimensional events as tuples of elementary relations, each of which 
+refers to the relation of the projections of the events on a specific dimension. For example, a visual event in a video is restricted 
+to two dimensional space ($x,y$) and time  ($t$), and one may be tempted to represent the relation between such events as 
+($R^X, R^Y, R^T$), where each of the $R$s can be one of the Allen's relation. But, it must  be appreciated that all discussions on 
+interval events presented in the earlier sections are valid so long there is a strict ordering relation between the event endpoints. 
+With two or more spatio-temporal dimensions, the orderings between the event endpoints become partial, and ambiguities creep in. For 
+example, it is easy to see that the two distinct relations presented in figures~\ref{fig:clock:Allen-ambiguity}(a) and (b) cannot 
+be distinguished with Allen's relations in the projected spaces alone.
+
+
+\begin{figure}[htbp!]
+	\subfigure[\texttt{B} is contained in \texttt{A}]{
+                \begin{minipage}{0.5\linewidth}
+                \centerline{
+%			\scalebox{0.5}{\input{./Clock/Allen-ambiguity-1.pgf}}
+			\epsfig{figure=./Clock/allen-ambiguity-1.eps,width=0.8\linewidth}
+                }
+                \end{minipage}
+        }
+	\subfigure[\texttt{B} is outside \texttt{A}]{
+                \begin{minipage}{0.5\linewidth}
+                \centerline{
+%			\scalebox{0.5}{\input{./Clock/Allen-ambiguity-2.pgf}}
+			\epsfig{figure=./Clock/allen-ambiguity-2.eps,width=0.8\linewidth}
+                }
+                \end{minipage}
+        }
+	\caption{Ambiguity in Allen's relations when extended to multi-dimensional space}
+	\label{fig:clock:Allen-ambiguity}
+\end{figure}
+
+The ambiguity can be resolved with introduction of one more set of relations that specifies the of intersection
+between two events. These containment relations are shown in figure~\ref{fig:clock:containment}. These relations
+can also have bit-string or fuzzy encodings as the Allen's relation. Thus, the relation between two events in
+a multi-dimensional space of dimension $N$ can be specified with an $N+1$-tuple, where one of the members represent
+the relation in containment space and each of the other $N$ members specify an Allen's relation for the  projections
+of the events on one of the dimensions.
+
+\begin{figure}[htbp!]
+	\centerline{
+%		\scalebox{0.8}{\input{./Clock/containment.pgf}}
+		\epsfig{figure=./Clock/containment.eps,width=0.8\linewidth}
+	}
+	\caption{Containment relations}
+	\label{fig:clock:containment}
+\end{figure}
