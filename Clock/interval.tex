@@ -32,8 +32,7 @@ the temporal relations between their endpoints.
 	r_{AB} \equiv ( r(s_A, s_B), r(s_A, e_B), r(e_A, s_B), r(e_A, e_B) ). 
 \end{equation}
 where each member of the tuple can take any of the values from the set $\{<,=,>\}$. 
-Considering the constraint $s_X < e_X$, we can have 13 valid relations between two interval events, which are known as Allen's 
-relations~\cite{Allen:1983}, and are summarized in figure~\ref{fig:clock:Allen}. 
+Considering the constraint $s_X < e_X$, we can have 13 valid relations between two interval events, which are known as Allen'srelations~\citep{Allen:1983}, and are summarized in figure~\ref{fig:clock:Allen}. 
 %
 In the figure, each of the relation is identified with a mnemonic, which we shall refer to in the rest of this section. The semantics 
 of the relation is pictorially depicted with two horizontal bars representing the duration of a reference event \texttt{A} and 
@@ -68,7 +67,7 @@ the meaning being clear from the context.
 Given a relation $p \in R_{ij}$ and $q \in R_{jk}$, we define a {\em transitivity function} $T(p,q) \rightarrow S$ to determine
 $S$, the implied constraint on the relation $R_{ik}$. In general, $S$ is a disjunction of a set of Allen's relation. For example,
 $T(\text{b,d}) \rightarrow (\text{b m o s d})$, which the reader is advised to verify. The set of all transitivity functions makes
-a {\em transitivity table} (the complete table is available in~\cite{Allen:1983}), which defines the mapping
+a {\em transitivity table} (the complete table is available in~\citep{Allen:1983}), which defines the mapping
 \begin{equation}
 	\mathbb{T}: \mathcal{A} \times \mathcal{A} \rightarrow \{ \mathcal{A} \}
 \end{equation}
@@ -222,7 +221,7 @@ the inexact knowledge about the relations between interval events.
  
 \index{inexact temporal relations}
 The ambiguity in establishing the temporal relations between the events motivates exploration of the nature of the inexactness
-in the relations. Allen's relations can be placed on a on a two dimensional grid~\cite{Freska:1992} as shown in
+in the relations. Allen's relations can be placed on a on a two dimensional grid~\citep{Freska:1992} as shown in
 figure~\ref{fig:clock:Allen-semantics}, to understand their semantics. The edges of the grid are marked with the comparison between 
 the start and the end points of the two events, designated as \texttt{A} and \texttt{B}. The 13 relations are depicted as cells in 
 the grid in their respective positions for the comparison results. We observe that only one of the comparison parameters change 
@@ -241,7 +240,8 @@ Thus, when the relation between two events are not known with certainty, it is s
 inexact fashion as a conceptual neighborhood. Such inexact descriptions are often useful for logical reasoning with interval events, 
 as illustrated in an earlier example.
 An alternate way to deal with such inexact description is to have fuzzy representation of the event boundaries, and define fuzzy
-membership functions for the Allen's relations~\cite{Wattamwar:2008}.
+membership functions for the Allen's relations~\citep{Wattamwar:2008}.
+
 
 \subsection{Spatial Events}
 
@@ -287,7 +287,7 @@ be distinguished with Allen's relations in the projected spaces alone.
 
 \index{containment relations}
 The ambiguity can be resolved with introduction of one more set of relations that specifies the of intersection between two 
-events~\cite{Wattamwar:2008}. These containment relations are shown in figure~\ref{fig:clock:containment}. These relations
+events~\citep{Wattamwar:2008}. These containment relations are shown in figure~\ref{fig:clock:containment}. These relations
 can also have bit-string or fuzzy encodings as the Allen's relation. Thus, the relation between two events in a multi-dimensional 
 space of dimension $N$ can be specified with an $N+1$-tuple, where one of the members represent the relation in containment 
 space and each of the other $N$ members specify an Allen's relation for the  projections of the events on one of the dimensions.
